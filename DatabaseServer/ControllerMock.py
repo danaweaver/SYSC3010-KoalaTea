@@ -20,8 +20,6 @@ x = {
 #    "teaId": 5,
 #}
 
-
-
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 port = int(textport)
 server_address = (host, port)

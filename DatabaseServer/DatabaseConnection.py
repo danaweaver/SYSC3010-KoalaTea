@@ -10,53 +10,70 @@ class DatabaseConnection:
         self.conn = self.createConnection()
 
     """
-    Create database connection, create Tea and Alarm tables and populate with
-    preset data
+    Ensure database is in ready state. If not created, create it and add presets
     """
     def initDatabase(self):
+        print("Initializing database")
         if self.conn is not None:
-            self.createTable(""" CREATE TABLE IF NOT EXISTS Tea (
-                                            teaID integer PRIMARY KEY,
-                                            name text NOT NULL,
-                                            time integer,
-                                            temperature real,
-                                            isCustom integer
-                                           ); """)
-            self.createTable(""" CREATE TABLE IF NOT EXISTS Alarm (
-                                            alarmID integer PRIMARY KEY,
-                                            name text NOT NULL,
-                                            location text NOT NULL
-                                           ); """)
+            if self.isDbEstablished() is False: # If database isn't already established:
+                print("Establishing Database")
+                self.createTable(""" CREATE TABLE IF NOT EXISTS Tea (
+                                                teaID integer PRIMARY KEY,
+                                                name text NOT NULL,
+                                                time integer,
+                                                temperature real,
+                                                isCustom integer
+                                               ); """)
+                self.createTable(""" CREATE TABLE IF NOT EXISTS Alarm (
+                                                alarmID integer PRIMARY KEY,
+                                                name text NOT NULL,
+                                                location text NOT NULL
+                                               ); """)
+                # Adding tea profile presets
+                teaPresetProfile1 = ('Green Tea', 180, 150.0, 0)
+                self.addTeaProfile(teaPresetProfile1)
+                teaPresetProfile2 = ('Orange Pekoe', 240, 190.2, 0)
+                self.addTeaProfile(teaPresetProfile2)
+                teaPresetProfile3 = ('Ginger', 60, 105.5, 0)
+                self.addTeaProfile(teaPresetProfile3)
+                teaPresetProfile4 = ('Earl Grey', 100, 120.0, 0)
+                self.addTeaProfile(teaPresetProfile4)
+
+                # Adding alarm presets
+                alarmPreset1 = ('Classic', "this/is/a/test1")
+                self.addAlarmProfile(alarmPreset1)
+                alarmPreset2 = ('Waves', "this/is/a/test2")
+                self.addAlarmProfile(alarmPreset2)
+                alarmPreset3 = ('Piano', "this/is/a/test3")
+                self.addAlarmProfile(alarmPreset3)
+                alarmPreset4 = ('Drip', "this/is/a/test4")
+                self.addAlarmProfile(alarmPreset4)
         else:
            print("Error: Database connection could not be created")
-        # Adding tea profile presets
-        teaPresetProfile1 = ('Green Tea', 180, 150.0, 0)
-        self.addTeaProfile(teaPresetProfile1)
-        teaPresetProfile2 = ('Orange Pekoe', 240, 190.2, 0)
-        self.addTeaProfile(teaPresetProfile2)
-        teaPresetProfile3 = ('Ginger', 60, 105.5, 0)
-        self.addTeaProfile(teaPresetProfile3)
-        teaPresetProfile4 = ('Earl Grey', 100, 120.0, 0)
-        self.addTeaProfile(teaPresetProfile4)
 
-        # Adding alarm presets
-        alarmPreset1 = ('Classic', "this/is/a/test1")
-        self.addAlarmProfile(alarmPreset1)
-        alarmPreset2 = ('Waves', "this/is/a/test2")
-        self.addAlarmProfile(alarmPreset2)
-        alarmPreset3 = ('Piano', "this/is/a/test3")
-        self.addAlarmProfile(alarmPreset3)
-        alarmPreset4 = ('Drip', "this/is/a/test4")
-        self.addAlarmProfile(alarmPreset4)
-        
+    """
+    Check if database is already established
+    TODO: Add more detail to this function
+    """
+    def isDbEstablished(self):
+        sqlTable = ''' SELECT name FROM sqlite_master WHERE type='table'; '''
+        cur = self.conn.cursor()
+        cur.execute(sqlTable)
+        tables = cur.fetchall()
+        print("tables is " + str(tables))
+        if len(tables) != 0:
+            return True
+        else:
+            return False
+
+    """
+    Create connecton to the database
+    """
     def createConnection(self):
-        #try:
-        #    db = sqlite3.connect(self.databasePath)
-        #except Error as e:
-        #    print(e)
-        db = sqlite3.connect(self.databasePath)
-        if db is None:
-            print("Error creating database")
+        try:
+            db = sqlite3.connect(self.databasePath)
+        except Error as e:
+            print(e)
         return db
 
     """
@@ -69,6 +86,7 @@ class DatabaseConnection:
               VALUES(?,?,?,?) '''
         cur = self.conn.cursor()
         cur.execute(sql, tea)
+        self.conn.commit()
         return cur.lastrowid
 
     """
@@ -77,11 +95,11 @@ class DatabaseConnection:
     alarm - Alarm entry to add
     """
     def addAlarmProfile(self, alarm):
-        #sql = ''' INSERT INTO Alarm (name, location)
-        #      VALUES(?,?) '''
-        sql = ''' INSERT INTO Alarm(name, location) VALUES(?,?) '''
+        sql = ''' INSERT INTO Alarm (name, location)
+              VALUES(?,?) '''
         cur = self.conn.cursor()
         cur.execute(sql, alarm)
+        self.conn.commit()
         return cur.lastrowid
 
     """
