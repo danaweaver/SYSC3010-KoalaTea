@@ -1,8 +1,8 @@
-import json, socket, sys, time
+import json, socket, sys, time, serial
 
 class ArduinoControl:
     
-    def measureWater(self):
+    def measureWater(self, temp):
         return True
     
     def lowerTeaBag(self):
