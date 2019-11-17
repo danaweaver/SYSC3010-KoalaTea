@@ -1,4 +1,4 @@
-import socket, sys, time, json
+import socket, sys, time, json, netifaces
 
 #Database Server Socket
 sData = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -85,6 +85,10 @@ testSelectTeaAlarm = {
     }
 }
 
+testAckNotification = {
+    "msgId": 8
+}
+
 # TestID 1 & 2: 
 # Requesting to get the preset teas and alarm for the Mobile Interface
 print("Test # 1 & 2: Requesting to get the preset teas and alarm for the Mobile Interface")
@@ -150,6 +154,15 @@ sMobile.sendto(data.encode('utf-8'), contServer_address)
 print("MB receives a notification from CT that the brewing process is complete")
 buf, address = sMobile.recvfrom(1024)
 print("Received: " + buf.decode('utf-8') + "\n\n")
+
+# TestID : 9
+# The Mobile Interface acknowledges the notification which turns off the LED the alarm
+print("The Mobile Interface acknowledges the notification which turns off the LED the alarm")
+print("MB sends CT a acknowledgement from the notification")
+data = json.dumps(testAckNotification)
+print("Sending: " + data)
+sMobile.sendto(data.encode('utf-8'), contServer_address)
+
 
 
 # Clean up

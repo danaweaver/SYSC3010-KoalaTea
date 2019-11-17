@@ -1,4 +1,4 @@
-import json, socket, sys, time
+import json, socket, sys, time, netifaces
 from ArduinoControl import ArduinoControl
 from DatabaseControl import DatabaseControl
 from MobileControl import MobileControl
@@ -13,7 +13,7 @@ class ControllerServer:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.s.settimeout(20) #TODO: need to remove this
         self.serverPort = 1080
-        self.server_address = ("localhost", self.serverPort)
+        self.server_address = ("localhost", self.serverPort) #netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
         self.cancel = False
         # Initialize the control objects
         self.arduinoControl = ArduinoControl()
@@ -32,11 +32,6 @@ class ControllerServer:
         while True:
             print("Waiting to receive on port %d" % self.serverPort)
             buf, addr = self.s.recvfrom(1024)
-
-            # print("Received: " + buf.decode('utf-8'))
-            # data = "ACK: " + buf.decode('utf-8')
-            # self.s.sendto(data.encode('utf-8'), addr)
-
             self.decipherReceivedPacket(buf)
 
 
@@ -54,8 +49,8 @@ class ControllerServer:
             self.mobileControl.retrieveTeaInfoAndAlarm(data['teas'], data['alarms'], self.s) #send tea and alarm to Mobile
         elif payload['msgId'] == 4: # Mobile selected a specified tea and alarm
             self.startTeaProcess(payload['tea'], payload['alarm'])
-        elif payload['msgId'] == 8: # Mobile acknowledges that the tea is ready
-            self.reset
+        elif payload['msgId'] == 8: # Mobile acknowledges the notification sent
+            self.reset()
         elif payload['msgId'] == 9: # Mobile request to add custom tea information
             responseData = self.databaseControl.addCustomTeaInformation(payload['tea']['name'], payload['tea']['time'], payload['tea']['temp'], self.s)
             data = json.loads(responseData)
@@ -64,6 +59,8 @@ class ControllerServer:
             responseData = self.databaseControl.removeCustomTeaInformation(payload['teaId'], self.s)
             data = json.loads(responseData)
             self.mobileControl.removeCustomTeaInformation(data['teaId'], data['status'], self.s)
+        elif payload['msgId'] == 13: # Mobile request to cancel the brewing process
+            self.cancel()
 
 
     """
@@ -73,23 +70,29 @@ class ControllerServer:
     alarm - the specified alarm
     """
     def startTeaProcess(self, tea, alarm):
-        self.switchControl.turnOnKettle
+        self.switchControl.turnOnKettle()
         self.arduinoControl.measureWater(tea['temp'])
-        self.switchControl.turnOffKettle
-        self.arduinoControl.lowerTeaBag
-        self.arduinoControl.displayTimer(tea['steepTime'])
-        self.arduinoControl.raiseTeaBag
+        self.switchControl.turnOffKettle()
+        self.arduinoControl.lowerTeaBag()
+        self.arduinoControl.displayTimer(tea['time'])
+        self.arduinoControl.raiseTeaBag()
         self.speakerControl.playAlarm(alarm['fileLocation'])
-        self.mobileControl.notifyUser
-        self.reset
+        self.mobileControl.notifyUser(1, self.s)
 
 
     """
     Reset the process (ie. turn off the LED and stop the alarm)
     """
     def reset(self):
-        self.arduinoControl.turnOffLED
-        self.speakerControl.stopAlarm
+        self.arduinoControl.turnOffLED()
+        self.speakerControl.stopAlarm()
+
+
+    """
+    Cancel the process (reset all the Arduino controls)
+    """
+    def cancel(self):
+        self.arduinoControl.reset()
 
 
 
