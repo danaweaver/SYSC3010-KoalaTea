@@ -11,13 +11,15 @@ x = {
 }
 #x = {
 #    "msgId": 11,
-#    "name": "SYSC3010",
-#    "time": 30,
-#    "temp": 50
+#    "tea": {
+#        "name": "test3",
+#        "steepTime": 30,
+#        "temp": 50
+#    }
 #}
 #x = {
 #    "msgId": 12,
-#    "teaId": 5,
+#    "teaId": 5
 #}
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

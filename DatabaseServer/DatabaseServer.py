@@ -11,26 +11,28 @@ send back the corresponding response message
 """
 class DatabaseServer:
     def  __init__(self):
-        self.receivePort = 1050
-        self.controllerAddr = ('localhost', self.receivePort)
-        # Initialize database and logger
+        self.sendPort = 1051
+        self.controllerAddr = ('localhost', 1050) # netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
+        # Initialize Connection and Logger objects
         self.connection = DatabaseConnection()
         self.logger = Logger()
+
 
     """
     Receive database requests from the Controller to process
     """
     def receiveRequests(self):
-        self.connection.initDatabase()
+        self.connection.checkDatabaseState()
         sReceive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sReceive.bind(self.controllerAddr)
 
         while True:
-            print ("Waiting to receive on port %d" % self.receivePort)
-            buf, addr = sReceive.recvfrom(self.receivePort)
+            print ("Waiting to receive")
+            buf, addr = sReceive.recvfrom(1024)
             self.decipherReceivedPacket(buf)
 
         s.shutdown(1)
+
 
     """
     Execute desired actions by examining the received message contents
@@ -38,61 +40,72 @@ class DatabaseServer:
     buf - Buffer of received message
     """
     def decipherReceivedPacket(self, buf):
+        # TODO: remove print below - for testing
         print("Received: " + buf.decode('utf-8'))
         payload = json.loads(buf.decode('utf-8'))
-        if payload['msgId'] == 3: # Retrieve all teas and alarm information
-            self.logger.logGetTeaInformation()
-            self.logger.logGetAlarmInformation()
-            teaInfo = self.connection.getTeaInformation()
-            alarmInfo = self.connection.getAlarmInformation()
-            responseData = self.getAllInfoResponseFormat(teaInfo, alarmInfo)
-            self.sendResponse(responseData)
-        elif payload["msgId"] == 11: # Add custom tea profile
-            self.logger.logAddCustom(payload["name"], payload["time"], payload["temp"])
-            self.connection.addCustomTeaProfile(payload["name"], payload["time"], payload["temp"])
-            responseData = self.getAddProfileResponseFormat()
-            self.sendResponse(responseData)  
-        elif payload["msgId"] == 12: # Remove custom tea profile
-            self.logger.logRemoveCustom(payload["teaId"])
-            self.connection.removeCustomTeaProfile(payload["teaId"])
-            responseData = self.getRemoveProfileResponseFormat()
-            self.sendResponse(responseData)
-        else: # Unexpected message type received - log and ignore
-            self.logger.logUnexpectedMessage(payload["msgId"])
-    
+        if "msgId" in payload:
+            if payload['msgId'] == 3: # Retrieve all teas and alarm information
+                #Logging
+                self.logger.logGetTeaInformation()
+                self.logger.logGetAlarmInformation()
+                # Retrieve information from database
+                teaInfo = self.connection.getTeaInformation()
+                alarmInfo = self.connection.getAlarmInformation()
+                # Response
+                responseData = self.getAllInfoResponseFormat(payload["msgId"], teaInfo, alarmInfo)
+                self.sendResponse(responseData)
+            elif payload["msgId"] == 11: # Adding custom tea profile
+                if payload["tea"]["name"] and payload["tea"]["steepTime"] and payload["tea"]["temp"]:
+                    self.logger.logAddCustom(payload["tea"]["name"], payload["tea"]["steepTime"], payload["tea"]["temp"])
+                    # Adding to database
+                    teaId = self.connection.addCustomTeaProfile(payload["tea"]["name"], payload["tea"]["steepTime"], payload["tea"]["temp"])
+                    # Reponse Message
+                    responseData = self.getAddRemoveProfileResponseFormat(payload["msgId"], teaId)
+                    self.sendResponse(responseData)
+                else: # Incorrect message format
+                    self.logger.logErrorMessage()
+            elif payload["msgId"] == 12: # Add or remove a custom tea profile
+                if payload["teaId"]:
+                    self.logger.logRemoveCustom(payload["teaId"])
+                    # Remove from database
+                    teaId = self.connection.removeCustomTeaProfile(payload["teaId"])
+                    # Reponse Message
+                    responseData = self.getAddRemoveProfileResponseFormat(payload["msgId"], teaId)
+                    self.sendResponse(responseData)
+                else: # Incorrect message format
+                    self.logger.logErrorMessage()
+            else: # Unexpected message ID received - log and ignore
+                self.logger.logErrorMessage()
+        else: # Could not find 'msgId' in payload - log and ignore
+            self.logger.logErrorMessage()
+
+
     """
     Get response format for retrieve information request
     
     teas - All tea data in Tea table
     alarms - All alarm data in Alarm table
     """
-    def getAllInfoResponseFormat(self, teas, alarms):
+    def getAllInfoResponseFormat(self, msgId, teas, alarms):
         x = {
-                "msgId": 3,
+                "msgId": msgId,
                 "teas": teas,
                 "alarms": alarms
             }
         return json.dumps(x)
     
-    """
-    Get response format for adding profile request
-    """
-    def getAddProfileResponseFormat(self):
-        x = {
-                "msgId": 11,
-                "status": 1
-            }
-        return json.dumps(x)
     
     """
-    Get response format for removing profile request
+    Get response format for adding profile request / removing profile request
     """
-    def getRemoveProfileResponseFormat(self):
+    def getAddRemoveProfileResponseFormat(self, msgId, teaId):
         x = {
-                "msgId": 12,
+                "msgId": msgId,
+                "teaId": teaId,
                 "status": 1
             }
         return json.dumps(x)
+
 
     """
     Send response message back to the Controller
@@ -103,7 +116,8 @@ class DatabaseServer:
         sendSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         
         self.logger.logSendResponse(payload)
-        sendSocket.sendto(payload.encode('utf-8'), ('localhost', 1051))
+        sendSocket.sendto(payload.encode('utf-8'), ('localhost', self.sendPort))
+
 
 def main():
     dbServer = DatabaseServer()

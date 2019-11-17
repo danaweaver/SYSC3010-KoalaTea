@@ -17,24 +17,32 @@ class Logger:
 
     """
     Logs when request to add a custom tea profile has been received
+
+    name - Name of tea profile being added
+    steepTime - Steeping time (in sec) of tea profile being added
+    temp - Temperature (in degrees) of tea profile being added
     """
-    def logAddCustom(self, name, time, temp):
-        print("Adding custom tea profile:\nname: " + name + "\ntime: " + str(time) + " secs\ntemperature: " + str(temp) + " degrees")
+    def logAddCustom(self, name, steepTime, temp):
+        print("Adding custom tea profile:\nname: " + name + "\nsteep time: " + str(steepTime) + " secs\ntemperature: " + str(temp) + " degrees")
 
     """
     Logs when request to remove a custom tea information has been received
+
+    teaID - ID of entry requested to be removed
     """
     def logRemoveCustom(self, teaId):
         print("Remove custom tea profile:\nteaId: " + str(teaId))
     
     """
     Logs when response message is sent back to Controller
+
+    Response - Response message
     """
     def logSendResponse(self, response):
         print("Sending reponse - message: " + response)
 
     """
-    Logs when request that has an unexpected message ID is received
+    Logs when request that has an incorrect message format is received
     """
-    def logUnexpectedMessage(self, id):
-        print("Unexpected message request received - ID = " + id)
+    def logErrorMessage(self):
+        print("Incorrect message format received")
