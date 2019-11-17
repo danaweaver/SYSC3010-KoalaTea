@@ -1,25 +1,25 @@
-import socket, sys, time, json
+import socket, sys, time, json, netifaces
 
 #Database Server Socket
 sData = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sData.settimeout(20)
 dbPort = 1050
-dbServer_address = ("localhost", dbPort)
+dbServer_address = ("localhost", dbPort) #10.0.0.23
 sData.bind(dbServer_address)
 
 #Mobile Interface Socket
 sMobile = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sMobile.settimeout(20)
 mobilePort = 1060
-mobileServerAddress = ("localhost", 1060)
+mobileServerAddress = ("localhost", 1060) #10.0.0.23
 sMobile.bind(mobileServerAddress)
 
 #Controller Address
 contPort = 1080
-contServer_address = ("localhost", contPort)
+contServer_address = ("localhost", contPort) #10.0.0.21
 
 #Variables
-testOne = {
+testPreset = {
         "msgId" : 3,
         "teas" : [
             {
@@ -72,6 +72,23 @@ testRemoveResponse = {
     "status": 1
 }
 
+testSelectTeaAlarm = {
+    "msgId": 4,
+    "tea": {
+        "name": "Oolong",
+        "time": 300,
+        "temp": 90.13
+    },
+    "alarm": {
+        "name": "SNSD - Gee",
+        "fileLocation": "C:/Desktop/SNSDGee.mp3"
+    }
+}
+
+testAckNotification = {
+    "msgId": 8
+}
+
 # TestID 1 & 2: 
 # Requesting to get the preset teas and alarm for the Mobile Interface
 print("Test # 1 & 2: Requesting to get the preset teas and alarm for the Mobile Interface")
@@ -84,7 +101,7 @@ print("DB receives the request from CT")
 buf, address = sData.recvfrom(1024) #DB receive from CT
 print("Received: " + buf.decode('utf-8'))
 print("DB sends acknowlegement to CT")
-data = json.dumps(testOne)
+data = json.dumps(testPreset)
 print("Sending: " + data)
 sData.sendto(data.encode('utf-8'), contServer_address) #DB send to CT
 print("MB receives the acknowledgement from CT")
@@ -127,7 +144,30 @@ print("MB receives the acknowledgement from CT")
 buf, address = sMobile.recvfrom(1024)
 print("Received: " + buf.decode('utf-8') + "\n\n")
 
+# Test : 
+# Mobile Interface selects a tea and alarm and requests to start the brewing process
+print("Test: Mobile Interface selects a tea and alarm and requests to start the brewing process")
+print("MB sends CT specified tea and alarm")
+data = json.dumps(testSelectTeaAlarm)
+print("Sending: " + data)
+sMobile.sendto(data.encode('utf-8'), contServer_address)
+print("MB receives a notification from CT that the brewing process is complete")
+buf, address = sMobile.recvfrom(1024)
+print("Received: " + buf.decode('utf-8') + "\n\n")
+
+# TestID : 9
+# The Mobile Interface acknowledges the notification which turns off the LED the alarm
+print("The Mobile Interface acknowledges the notification which turns off the LED the alarm")
+print("MB sends CT a acknowledgement from the notification")
+data = json.dumps(testAckNotification)
+print("Sending: " + data)
+sMobile.sendto(data.encode('utf-8'), contServer_address)
+
+
+
 # Clean up
-print("Clean up" + "\n\n")
+print("Clean up sockets" + "\n\n")
 sData.shutdown(1)
 sMobile.shutdown(1)
+sData.close()
+sMobile.close()

@@ -1,10 +1,10 @@
-import json, socket, sys, time
+import json, socket, sys, time, netifaces
 
 class DatabaseControl:
 
     def __init__(self):
         self.dbPort = 1050
-        self.dbServerAddress = ("localhost", 1050)
+        self.dbServerAddress = ("localhost", 1050) #netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
     
     """
     Retrieves all the Teas and Alarms from the Database Server 
