@@ -13,14 +13,8 @@ class DatabaseControl:
     return - the retrieves teas and alarms
     """
     def getTeaAlarmInformation(self, sock):
-        #should I do checks of the msgId when receiving from the DB?
-        #send message to database with msgId = 3
         jdata = {"msgId": 3}
-        data = json.dumps(jdata)
-        sock.sendto(data.encode('utf-8'), self.dbServerAddress)
-        #receive the teas and alarms from the database
-        buf, address = sock.recvfrom(1024)
-        return buf.decode('utf-8')
+        return self.sendReceive(jdata, sock)
 
 
     """
@@ -37,14 +31,11 @@ class DatabaseControl:
             "msgId": 11,
             "tea": {
                 "name": name,
-                "time": time,
+                "steepTime": time,
                 "temp": temp
             }
         }
-        data = json.dumps(jdata)
-        sock.sendto(data.encode('utf-8'), self.dbServerAddress)
-        buf, address = sock.recvfrom(1024)
-        return buf.decode('utf-8')
+        return self.sendReceive(jdata, sock)
 
 
     """
@@ -59,12 +50,20 @@ class DatabaseControl:
             "msgId": 12,
             "teaId": teaID
         }
+        return self.sendReceive(jdata, sock)
+
+
+    """
+    Send the request to the Database Server and wait for the expected response
+
+    jdata - json message to send to the Database
+    sock - the controller socket to send to the Database
+    """
+    def sendReceive(self, jdata, sock):
         data = json.dumps(jdata)
+        print("DatabaseControl sending: " + data)
         sock.sendto(data.encode('utf-8'), self.dbServerAddress)
         buf, address = sock.recvfrom(1024)
-        return buf.decode('utf-8')
-
-    # def sendReceive(self, data, sock):
-    #     sock.sendto(data.encode('utf-8'), self.dbServerAddress)
-    #     buf, address = sock.recvfrom(1024)
-    #     return buf.decode('utf-8')
+        response = buf.decode('utf-8')
+        print("DatabaseControl received: " + response)
+        return response

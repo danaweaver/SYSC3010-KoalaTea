@@ -1,22 +1,20 @@
 import json, socket, sys, time, netifaces
 from ArduinoControl import ArduinoControl
+#from ArduinoControlTest import ArduinoControlTest #for testing only
 from DatabaseControl import DatabaseControl
 from MobileControl import MobileControl
 from SpeakerControl import SpeakerControl
 from SwitchControl import SwitchControl
 
-# s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# serverPort = 1080
-
 class ControllerServer:
     def __init__(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.s.settimeout(20) #TODO: need to remove this
         self.serverPort = 1080
         self.server_address = ("localhost", self.serverPort) #netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
         self.cancel = False
         # Initialize the control objects
         self.arduinoControl = ArduinoControl()
+        # self.arduinoControl = ArduinoControlTest() #for testing only
         self.databaseControl = DatabaseControl()
         self.mobileControl = MobileControl()
         self.speakerControl = SpeakerControl()
@@ -48,11 +46,12 @@ class ControllerServer:
             data = json.loads(responseData)
             self.mobileControl.retrieveTeaInfoAndAlarm(data['teas'], data['alarms'], self.s) #send tea and alarm to Mobile
         elif payload['msgId'] == 4: # Mobile selected a specified tea and alarm
+            # self.arduinoControl.setSerialPort() #for testing only
             self.startTeaProcess(payload['tea'], payload['alarm'])
         elif payload['msgId'] == 8: # Mobile acknowledges the notification sent
             self.reset()
         elif payload['msgId'] == 9: # Mobile request to add custom tea information
-            responseData = self.databaseControl.addCustomTeaInformation(payload['tea']['name'], payload['tea']['time'], payload['tea']['temp'], self.s)
+            responseData = self.databaseControl.addCustomTeaInformation(payload['tea']['name'], payload['tea']["steepTime"], payload['tea']['temp'], self.s)
             data = json.loads(responseData)
             self.mobileControl.addCustomTeaInformation(data['teaId'], data['status'], self.s)
         elif payload['msgId'] == 10: # Mobile request to remove custom tea information
@@ -74,8 +73,9 @@ class ControllerServer:
         self.arduinoControl.measureWater(tea['temp'])
         self.switchControl.turnOffKettle()
         self.arduinoControl.lowerTeaBag()
-        self.arduinoControl.displayTimer(tea['time'])
+        self.arduinoControl.displayTimer(tea["steepTime"])
         self.arduinoControl.raiseTeaBag()
+        self.arduinoControl.turnOnLED()
         self.speakerControl.playAlarm(alarm['fileLocation'])
         self.mobileControl.notifyUser(1, self.s)
 

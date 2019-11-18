@@ -4,7 +4,7 @@ class MobileControl:
 
     def __init__(self):
         self.mobilePort = 1060
-        self.mobileServerAddress = ("localhost", 1060) #netifaces.ifaddresses('wlan0')[netifaces .AF_INET][0]['addr']
+        self.mobileServerAddress = ("localhost", 3020) #netifaces.ifaddresses('wlan0')[netifaces .AF_INET][0]['addr']
     
 
     """
@@ -20,8 +20,7 @@ class MobileControl:
             "teas": teas,
             "alarms": alarms
         }
-        data = json.dumps(jdata)
-        sock.sendto(data.encode('utf-8'), self.mobileServerAddress)
+        self.sendData(jdata, sock)
 
 
     """
@@ -37,8 +36,7 @@ class MobileControl:
             "teaId": teaId,
             "status": status
         }
-        data = json.dumps(jdata)
-        sock.sendto(data.encode('utf-8'), self.mobileServerAddress)
+        self.sendData(jdata, sock)
 
 
     """
@@ -54,8 +52,7 @@ class MobileControl:
             "teaId": teaId,
             "status": status
         }
-        data = json.dumps(jdata)
-        sock.sendto(data.encode('utf-8'), self.mobileServerAddress)
+        self.sendData(jdata, sock)
     
 
     """
@@ -69,5 +66,16 @@ class MobileControl:
             "msgId": 4,
             "status": status
         }
+        self.sendData(jdata, sock)
+
+
+    """
+    Send the request to the Mobile Interface and wait for the expected response
+
+    jdata - json message to send to the Mobile Interface
+    sock - the controller socket to send to the Mobile Interface
+    """
+    def sendData(self, jdata, sock):
         data = json.dumps(jdata)
+        print("MobileControl sending: " + data)
         sock.sendto(data.encode('utf-8'), self.mobileServerAddress)
