@@ -1,14 +1,19 @@
-import json, socket, sys, time, serial
+import json, socket, sys, time, serial, pty, os
 
-class ArduinoControl:
+class ArduinoControlTest:
 
     def __init__(self):
+        #For testing purposes
+        self.masterA, self.slaveA = pty.openpty()
+        print("ArduinoControl serial: " + os.ttyname(self.slaveA))
         self.ser = serial.Serial()
-        self.ser = serial.Serial('/dev/ttyACM0', 9600)
-    
+
+    def setSerialPort(self):
+        self.ser = serial.Serial('/dev/pts/1')
+
 
     """
-    Request the Arduino to measure the temperature of the water water to the specified temperature
+    Request the Arduino to measure the temperature of the water to the specified temperature
     
     temp - specified temperature (float)
     """
@@ -16,7 +21,7 @@ class ArduinoControl:
         print("ArduinoControl sending tStart")
         self.ser.write("tStart".encode('utf-8'))
         while True:
-            data = ser.readline()
+            data = os.read(self.masterA, 1024).decode('utf-8')
             print("ArduinoControl received " + data)
             measTemp = float(data.split("T")[1])
             if measTemp >= temp:
@@ -99,7 +104,7 @@ class ArduinoControl:
         print("ArduinoControl sending " + send.encode('utf-8'))
         self.ser.write(send.encode('utf-8'))
         while True:
-            data = ser.readline()
+            data = os.read(self.masterA, 1024).decode('utf-8')
             print("ArduinoControl received " + data)
             if(data == response):
                 break

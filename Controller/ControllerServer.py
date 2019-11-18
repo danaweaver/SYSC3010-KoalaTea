@@ -1,12 +1,10 @@
 import json, socket, sys, time, netifaces
 from ArduinoControl import ArduinoControl
+#from ArduinoControlTest import ArduinoControlTest #for testing only
 from DatabaseControl import DatabaseControl
 from MobileControl import MobileControl
 from SpeakerControl import SpeakerControl
 from SwitchControl import SwitchControl
-
-# s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# serverPort = 1080
 
 class ControllerServer:
     def __init__(self):
@@ -17,6 +15,7 @@ class ControllerServer:
         self.cancel = False
         # Initialize the control objects
         self.arduinoControl = ArduinoControl()
+        # self.arduinoControl = ArduinoControlTest() #for testing only
         self.databaseControl = DatabaseControl()
         self.mobileControl = MobileControl()
         self.speakerControl = SpeakerControl()
@@ -48,6 +47,7 @@ class ControllerServer:
             data = json.loads(responseData)
             self.mobileControl.retrieveTeaInfoAndAlarm(data['teas'], data['alarms'], self.s) #send tea and alarm to Mobile
         elif payload['msgId'] == 4: # Mobile selected a specified tea and alarm
+            # self.arduinoControl.setSerialPort() #for testing only
             self.startTeaProcess(payload['tea'], payload['alarm'])
         elif payload['msgId'] == 8: # Mobile acknowledges the notification sent
             self.reset()
@@ -76,6 +76,7 @@ class ControllerServer:
         self.arduinoControl.lowerTeaBag()
         self.arduinoControl.displayTimer(tea['time'])
         self.arduinoControl.raiseTeaBag()
+        self.arduinoControl.turnOnLED()
         self.speakerControl.playAlarm(alarm['fileLocation'])
         self.mobileControl.notifyUser(1, self.s)
 
