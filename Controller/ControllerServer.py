@@ -9,7 +9,6 @@ from SwitchControl import SwitchControl
 class ControllerServer:
     def __init__(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.s.settimeout(20) #TODO: need to remove this
         self.serverPort = 1080
         self.server_address = ("localhost", self.serverPort) #netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
         self.cancel = False
@@ -52,7 +51,7 @@ class ControllerServer:
         elif payload['msgId'] == 8: # Mobile acknowledges the notification sent
             self.reset()
         elif payload['msgId'] == 9: # Mobile request to add custom tea information
-            responseData = self.databaseControl.addCustomTeaInformation(payload['tea']['name'], payload['tea']['time'], payload['tea']['temp'], self.s)
+            responseData = self.databaseControl.addCustomTeaInformation(payload['tea']['name'], payload['tea']["steepTime"], payload['tea']['temp'], self.s)
             data = json.loads(responseData)
             self.mobileControl.addCustomTeaInformation(data['teaId'], data['status'], self.s)
         elif payload['msgId'] == 10: # Mobile request to remove custom tea information
@@ -74,7 +73,7 @@ class ControllerServer:
         self.arduinoControl.measureWater(tea['temp'])
         self.switchControl.turnOffKettle()
         self.arduinoControl.lowerTeaBag()
-        self.arduinoControl.displayTimer(tea['time'])
+        self.arduinoControl.displayTimer(tea["steepTime"])
         self.arduinoControl.raiseTeaBag()
         self.arduinoControl.turnOnLED()
         self.speakerControl.playAlarm(alarm['fileLocation'])

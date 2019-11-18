@@ -13,7 +13,6 @@ class DatabaseControl:
     return - the retrieves teas and alarms
     """
     def getTeaAlarmInformation(self, sock):
-        #should I do checks of the msgId when receiving from the DB?
         jdata = {"msgId": 3}
         return self.sendReceive(jdata, sock)
 
@@ -32,7 +31,7 @@ class DatabaseControl:
             "msgId": 11,
             "tea": {
                 "name": name,
-                "time": time,
+                "steepTime": time,
                 "temp": temp
             }
         }

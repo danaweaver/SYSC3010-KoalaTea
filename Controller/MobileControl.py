@@ -4,7 +4,7 @@ class MobileControl:
 
     def __init__(self):
         self.mobilePort = 1060
-        self.mobileServerAddress = ("localhost", 1060) #netifaces.ifaddresses('wlan0')[netifaces .AF_INET][0]['addr']
+        self.mobileServerAddress = ("localhost", 3020) #netifaces.ifaddresses('wlan0')[netifaces .AF_INET][0]['addr']
     
 
     """

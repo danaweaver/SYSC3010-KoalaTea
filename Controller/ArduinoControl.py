@@ -80,13 +80,11 @@ class ArduinoControl:
 
 
     """
-    Reset the devices on the Arduino to its original state
+    Reset the devices on the Arduino to its original state (ie. stop the temperature measurement, raise the teabag, stop the timer, turn off the LED)
     """
     def reset(self):
-        self.stopTemperature()
-        self.raiseTeaBag()
-        self.stopTimer()
-        self.turnOffLED()
+        print("ArduinoControl sending 444")
+        self.ser.write("444".encode('utf-8'))
 
 
     """

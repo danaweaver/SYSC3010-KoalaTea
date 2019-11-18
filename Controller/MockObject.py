@@ -15,7 +15,7 @@ sData.bind(dbServer_address)
 #Mobile Interface Socket
 sMobile = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sMobile.settimeout(20)
-mobilePort = 1060
+mobilePort = 3020
 mobileServerAddress = ("localhost", 1060) #10.0.0.23
 sMobile.bind(mobileServerAddress)
 
@@ -29,12 +29,12 @@ testPreset = {
         "teas" : [
             {
                 "name": "green tea",
-                "time": 13, 
+                "steepTime": 13, 
                 "temp": 30.0
             },
             {
                 "name": "oolong tea",
-                "time": 10, 
+                "steepTime": 10, 
                 "temp": 82.3
             },
         ],
@@ -55,7 +55,7 @@ testAddRequest = {
     "msgId": 9, 
     "tea": {
         "name": "jasmine tea",
-        "time": 50,
+        "steepTime": 50,
         "temp": 79.6
     }
 }
@@ -81,7 +81,7 @@ testSelectTeaAlarm = {
     "msgId": 4,
     "tea": {
         "name": "Oolong",
-        "time": 300,
+        "steepTime": 300,
         "temp": 90.13
     },
     "alarm": {
@@ -154,8 +154,8 @@ time.sleep(5)
 print("Sending T100.13")
 ser.write("T100.13".encode('utf-8'))
 print("AD receives request to stop measuring the water temperature")
-buf = os.read(masterC, 1024)
-print("Received: " + buf.decode('utf-8'))
+buf = os.read(masterC, 1024).decode('utf-8')
+print("Received: " + buf)
 print("Test 4: " + checkTest(buf, "tStop") + "\n\n")
 
 # Test 5:
@@ -217,8 +217,8 @@ data = json.dumps(testAckNotification)
 print("Sending: " + data)
 sMobile.sendto(data.encode('utf-8'), contServer_address)
 print("AD receives request to turn off the LED from CT")
-buf = os.read(masterC, 1024)
-print("Received: " + buf.decode('utf-8'))
+buf = os.read(masterC, 1024).decode('utf-8')
+print("Received: " + buf)
 print("Test 9: " + checkTest(buf, "70") + "\n\n")
 
 # Test :
