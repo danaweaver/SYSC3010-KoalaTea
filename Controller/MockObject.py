@@ -1,9 +1,20 @@
+"""
+The MockObject script creates two sockets for the Mobile Interface and Database Server, and a Serial port for the Arduino as mock
+components. These will simulate the connections for their respective components. The test will simulate the basic flow of events 
+when the Mobile Interface selects a specified tea profile and alarm. The full test plan is described in the Test Plan Document under
+Distributed Systems Unit Test. Some test checks must be the Controller Server to verify that the mock object sent the correct message.
+Another way to check if the mock object correctly sent the expected message is if the next test is running.
+
+Restrictions: The Serial port that will mock the Arduino must be set manually prior to running the script
+
+"""
+
 import socket, sys, time, json, netifaces, serial, pty, os
 
 #Arduino Serial Port
 masterC, slaveC = pty.openpty()
 print("ArduinoControl serial: " + os.ttyname(slaveC))
-ser = serial.Serial('/dev/pts/0')
+ser = serial.Serial('/dev/pts/0') #serial port needs to be adjusted manually before running the script
 
 #Database Server Socket
 sData = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -16,7 +27,7 @@ sData.bind(dbServer_address)
 sMobile = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sMobile.settimeout(20)
 mobilePort = 3020
-mobileServerAddress = ("localhost", 1060) #10.0.0.23
+mobileServerAddress = ("localhost", mobilePort) #10.0.0.23
 sMobile.bind(mobileServerAddress)
 
 #Controller Address
@@ -95,12 +106,12 @@ testAckNotification = {
 }
 
 def checkTest(actual, expected):
+    print("Expected: " + str(expected) + " | Actual: " + str(actual))
     if (actual == expected):
         return "Pass"
-    print("Expected: " + str(expected) + " | Actual: " + str(actual))
     return "Fail"
 
-# TestID 1: 
+# Test 1: 
 # Controller receives Mobile Interface preset request and queries Database Server
 print("Test 1: Controller receives Mobile Interface preset request and queries Database Server")
 print("------------------------------------------------------------------------------------------")
@@ -163,8 +174,9 @@ print("Test 4: " + checkTest(buf, "tStop") + "\n\n")
 print("Test 5: The Controller requests the Arduino to lower the tea bag. The Arduino sends a message to the Controller that the tea bag has been lowered.")
 print("------------------------------------------------------------------------------------------")
 print("AD receives request to lower tea bag from CT")
-buf = os.read(masterC, 1024)
-print("Received: " + buf.decode('utf-8'))
+buf = os.read(masterC, 1024).decode('utf-8')
+print("Received: " + buf)
+print("Test 5: " + checkTest(buf, "50"))
 print("AD sends acknowledgment that tea bag has been lowered to CT")
 print("Sending: lowerTea" + "\n\n")
 ser.write("lowerTea".encode('utf-8'))
@@ -174,8 +186,9 @@ ser.write("lowerTea".encode('utf-8'))
 print("Test 6: The Controller requests the Arduino to start the specified timer on the LCD display. The Arduino sends a message to the Controller that the timer has completed.")
 print("------------------------------------------------------------------------------------------")
 print("AD receives request to start the timer from CT")
-buf = os.read(masterC, 1024)
-print("Received: " + buf.decode('utf-8'))
+buf = os.read(masterC, 1024).decode('utf-8')
+print("Received: " + buf)
+print("Test 6: " + checkTest(buf, "6300"))
 print("Waiting 5 seconds to brew")
 time.sleep(5)
 print("AD sends acknowledgment that time timer is complete to CT")
@@ -187,8 +200,9 @@ ser.write("6Done".encode('utf-8'))
 print("Test 7: The Controller requests the Arduino to raise the tea bag. The Arduino sends a message to the Controller that the tea bag has been raised.")
 print("------------------------------------------------------------------------------------------")
 print("AD receives request to raise tea bag from CT")
-buf = os.read(masterC, 1024)
-print("Received: " + buf.decode('utf-8'))
+buf = os.read(masterC, 1024).decode('utf-8')
+print("Received: " + buf)
+print("Test 6: " + checkTest(buf, "51"))
 print("AD sends acknowledgment that tea bag has been raise to CT")
 print("Sending: raiseTea" + "\n\n")
 ser.write("raiseTea".encode('utf-8'))
@@ -206,7 +220,7 @@ print("Received: " + buf.decode('utf-8'))
 payload = json.loads(buf.decode('utf-8'))
 print("Test 8: " + checkTest(payload['msgId'], 4) + "\n\n")
 
-# TestID : 9
+# Test : 9
 # The Mobile Interface acknowledges the notification which turns off the LED the alarm
 print("Wait 10 seconds before acknowledging")
 time.sleep(10)
