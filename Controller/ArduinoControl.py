@@ -97,7 +97,7 @@ class ArduinoControl:
         print("ArduinoControl sending " + send.encode('utf-8'))
         self.ser.write(send.encode('utf-8'))
         while True:
-            data = ser.readline()
+            data = ser.readline().decode('utf-8').strip('\r\n')
             print("ArduinoControl received " + data)
             if(data == response):
                 break
