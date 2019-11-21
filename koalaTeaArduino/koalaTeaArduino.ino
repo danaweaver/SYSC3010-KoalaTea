@@ -14,7 +14,6 @@ LiquidCrystal lcd(13, 12, 6, 5, 4, 3);
 // initialize the stepper motor with pins 8-11
 Stepper stepper (STEPS, 8, 10, 9, 11);
 
-int timer, startTime;
 String read;
 
 void setup() {
@@ -30,48 +29,58 @@ void setup() {
 
 }
 
+void temperatureRead(){
+  sensors.requestTemperatures();
+  Serial.println("T" + String(sensors.getTempCByIndex(0))); 
+}
+
+bool tempStop() {
+  String data;
+  if(Serial.available() > 0) {
+    data = Serial.readStringUntil('\n');
+    if(data == "tStop") {return true;}
+  }
+  return false;
+}
+
 void loop() {
-  if(Serial.available()){
-    read = Serial.readString();  
+  if(Serial.available() > 0){
+    digitalWrite(7, HIGH);  // turn on led
+    read = Serial.readStringUntil('\n'); 
     // temperature reading
     if(read == "tStart") {
-      while(read != "tStop"){
+      while (!tempStop()) {
         temperatureRead();
-        delay(1000); //wait one second before rereading
-        if(Serial.available()){
-          read = Serial.readString();
-        }
+        delay(2000);
+        //if (tempStop()) {break;}
       }
     }
     // lower and raise teabag
     else if(read == "50") {
-      rotation(1);
-      Serial.print("lowerTea");
+      //rotation(1);
+      delay(1000);
+      Serial.println("lowerTea");
     }
     else if(read == "51") {
-      rotation(0);
-      Serial.print("raiseTea");
+      delay(1000);
+      //rotation(0);
+      Serial.println("raiseTea"); 
     }
     // timer 
     else if(read.charAt(0) == '6') {
       lcd.setCursor(0, 1);  // column 0 of line 1 (2nd row)
       lcd.print("Time:");
       lcd.setCursor(7, 1);
-      timer = read.substring(1).toInt(); // value after the 6 is the time in seconds
-      startTime = millis(); 
+      int timer = read.substring(1).toInt(); // value after the 6 is the time in seconds
+      int startTime = millis(); 
       while(timer != 0){
-        lcd.print(timer - (millis() - startTime / 1000));
-        timer--;
+        lcd.println(timer - (millis() - startTime / 1000));
+        //timer--;
       }
       digitalWrite(7, HIGH);  // turn on led 
-      Serial.print("6Done");
+      Serial.println("6Done");
     }
   }
-}
-
-void temperatureRead(){
-  sensors.requestTemperatures();
-  Serial.println(sensors.getTempCByIndex(0)); 
 }
 
 void rotation(bool direction){  
