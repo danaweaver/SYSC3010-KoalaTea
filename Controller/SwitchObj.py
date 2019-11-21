@@ -7,21 +7,20 @@ from random import randint
 import time
 import os
 
-# Put Hao's credentials here
 EMAIL = "abc"
 PASSWORD = "123"
 
 # Code based on https://github.com/albertogeniola/MerossIot
 
-class SwitchControl:
+class smartSwitch:
     def __init__(self):
         # Initiates the Meross Cloud Manager. This is in charge of handling the communication with the remote endpoint
         self.manager = MerossManager(meross_email=EMAIL, meross_password=PASSWORD)
         # Starts the manager
         self.manager.start()
         self.smart_sw = self.manager.get_device_by_name("Living room lamp")
-        #print("The smart switch is ")
-        #print(self.smart_sw)
+        print("The smart switch is ")
+        print(self.smart_sw)
 
 
     def checkOnline(self):
@@ -31,14 +30,14 @@ class SwitchControl:
             return True
 
 
-    def turnOnKettle(self):
+    def turnOn(self):
         channels = len(self.smart_sw.get_channels())
         for i in range(0, channels):
             print("Turning on channel %d of %s" % (i, self.smart_sw.name))
             self.smart_sw.turn_on_channel(i)
 
 
-    def turnOffKettle(self):
+    def turnOff(self):
         channels = len(self.smart_sw.get_channels())
         for i in range(0, channels):
             print("Turning off channel %d of %s" % (i, self.smart_sw.name))
@@ -46,14 +45,13 @@ class SwitchControl:
 
 
 if __name__ == '__main__':
-    # put thus in controller
-    swtichControl = SwitchControl()
-    if switchControl.checkOnline():
-        switchControl.turnOnKettle();
-        time.sleep(5)
-        switchControl.turnOffKettle();
+    smart_switch = smartSwitch()
+    if smart_switch.checkOnline():
+        smart_switch.turnOn();
+        time.sleep(10)
+        smart_switch.turnOff();
     # At this point, we are all done playing with the library, so we gracefully disconnect and clean resources.
     print("We are done playing. Cleaning resources...")
-    #manager.stop()
+    manager.stop()
 
     print("Bye bye!")

@@ -7,7 +7,10 @@ DatabaseConnection class intializes and performs all actions on the database
 """
 class DatabaseConnection:
     def __init__(self):
-        self.databasePath = r"/home/pi/Desktop/Dana/SYSC3010-KoalaTea/DatabaseServer/KoalaTea.db"
+        # Computer database path
+        self.databasePath = r"C:\Users\Dana Weaver\Desktop\School\Fourth Year\SYSC3010\SYSC3010-KoalaTea\KoalaTea.db"
+        # Pi database path
+        #self.databasePath = r"/home/pi/Desktop/Dana/SYSC3010-KoalaTea/DatabaseServer/KoalaTea.db"
         self.conn = self.createConnection()
 
     """
@@ -60,13 +63,15 @@ class DatabaseConnection:
         self.addTeaProfile(teaPresetProfile4)
 
         # Adding alarm presets
-        alarmPreset1 = ('Classic', "this/is/a/test1")
+        alarmPreset1 = ('Classic', "/home/pi/Desktop/Music/BasicAlarm.mp3")
         self.addAlarmProfile(alarmPreset1)
-        alarmPreset2 = ('Waves', "this/is/a/test2")
+        alarmPreset2 = ('HIP', "/home/pi/Desktop/Music/HIP.mp3")
         self.addAlarmProfile(alarmPreset2)
-        alarmPreset3 = ('Piano', "this/is/a/test3")
+        alarmPreset3 = ('Eye Of The Tiger', "/home/pi/Desktop/Music/EyeOfTheTiger.mp3")
         self.addAlarmProfile(alarmPreset3)
-        alarmPreset4 = ('Drip', "this/is/a/test4")
+        alarmPreset4 = ('Mistletoe', "/home/pi/Desktop/Music/Mistletoe.mp3")
+        self.addAlarmProfile(alarmPreset4)
+        alarmPreset4 = ('Gee', "this/is/a/Gee.mp3")
         self.addAlarmProfile(alarmPreset4)
 
 
