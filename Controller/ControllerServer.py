@@ -53,11 +53,11 @@ class ControllerServer:
         elif payload['msgId'] == 9: # Mobile request to add custom tea information
             responseData = self.databaseControl.addCustomTeaInformation(payload['tea']['name'], payload['tea']["steepTime"], payload['tea']['temp'], self.s)
             data = json.loads(responseData)
-            self.mobileControl.addCustomTeaInformation(data['teaId'], data['status'], self.s)
+            self.mobileControl.addCustomTeaInformation(data['teaId'], self.s)
         elif payload['msgId'] == 10: # Mobile request to remove custom tea information
             responseData = self.databaseControl.removeCustomTeaInformation(payload['teaId'], self.s)
             data = json.loads(responseData)
-            self.mobileControl.removeCustomTeaInformation(data['teaId'], data['status'], self.s)
+            self.mobileControl.removeCustomTeaInformation(data['teaId'], self.s)
         elif payload['msgId'] == 13: # Mobile request to cancel the brewing process
             self.cancel()
 
@@ -75,9 +75,9 @@ class ControllerServer:
         self.arduinoControl.lowerTeaBag()
         self.arduinoControl.displayTimer(tea["steepTime"])
         self.arduinoControl.raiseTeaBag()
-        self.arduinoControl.turnOnLED()
+        self.arduinoControl.turnOnLED() #TODO: Maybe need to remove since Kevin already added it into the AD code
         self.speakerControl.playAlarm(alarm['fileLocation'])
-        self.mobileControl.notifyUser(1, self.s)
+        self.mobileControl.notifyUser(self.s)
 
 
     """
