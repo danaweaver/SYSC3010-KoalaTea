@@ -73,8 +73,7 @@ testAddRequest = {
 
 testAddRepsonse = {
     "msgId": 11,
-    "teaId": 13,
-    "status": 1
+    "teaId": 13
 }
 
 testRemoveRequest = {
@@ -84,8 +83,7 @@ testRemoveRequest = {
 
 testRemoveResponse = {
     "msgId": 12,
-    "teaId": 13,
-    "status": 1
+    "teaId": 13
 }
 
 testSelectTeaAlarm = {

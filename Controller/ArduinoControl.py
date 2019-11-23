@@ -3,7 +3,6 @@ import json, socket, sys, time, serial
 class ArduinoControl:
 
     def __init__(self):
-        self.ser = serial.Serial()
         self.ser = serial.Serial('/dev/ttyACM0', 9600)
     
 
@@ -16,7 +15,7 @@ class ArduinoControl:
         print("ArduinoControl sending tStart")
         self.ser.write("tStart".encode('utf-8'))
         while True:
-            data = ser.readline()
+            data = ser.readline().decode('utf-8').strip('\r\n')
             print("ArduinoControl received " + data)
             measTemp = float(data.split("T")[1])
             if measTemp >= temp:
@@ -89,7 +88,7 @@ class ArduinoControl:
 
     """
     Send the request to the Arduino and wait for the expected response
-
+    
     send - message to send to the Arduino (string)
     response - the expected message from the Arduino (string)
     """
