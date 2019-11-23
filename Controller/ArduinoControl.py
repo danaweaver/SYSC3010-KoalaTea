@@ -79,7 +79,8 @@ class ArduinoControl:
 
 
     """
-    Reset the devices on the Arduino to its original state (ie. stop the temperature measurement, raise the teabag, stop the timer, turn off the LED)
+    Request the Arduino to reset the IO devices to its original state 
+    (ie. stop the temperature measurement, raise the teabag, stop the timer, turn off the LED)
     """
     def reset(self):
         print("ArduinoControl sending 444")
