@@ -4,7 +4,7 @@
 #include <Stepper.h>
 
 #define ONE_WIRE_BUS 2
-#define STEPS 32
+#define STEPS 2048
 
 // initialize the temperature sensor to pin 2
 OneWire oneWire(ONE_WIRE_BUS);
@@ -15,12 +15,14 @@ LiquidCrystal lcd(13, 12, 6, 5, 4, 3);
 Stepper stepper (STEPS, 8, 10, 9, 11);
 
 String read;
+int timer = 0;
+int secondsPassed = 0;
 
 void setup() {
   Serial.begin(9600);
   // initialize LED to pin 7
   pinMode(7, OUTPUT);
-  stepper.setSpeed(200);
+  stepper.setSpeed(15);
   sensors.begin();
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
@@ -70,12 +72,18 @@ void loop() {
     else if(read.charAt(0) == '6') {
       lcd.setCursor(0, 1);  // column 0 of line 1 (2nd row)
       lcd.print("Time:");
-      lcd.setCursor(7, 1);
-      int timer = read.substring(1).toInt(); // value after the 6 is the time in seconds
-      int startTime = millis(); 
-      while(timer != 0){
-        lcd.println(timer - (millis() - startTime / 1000));
-        //timer--;
+      timer = read.substring(1).toInt(); // value after the 6 is the time in seconds
+      secondsPassed = 0;
+      unsigned long startTime = millis(); 
+      while(timer != 0) {
+        lcd.setCursor(7, 1);
+        if((millis() - startTime / 1000 > secondsPassed )){
+          timer--;
+          secondsPassed++;
+          lcd.print("   ");
+          lcd.setCursor(7, 1);
+        }
+        lcd.println(timer);
       }
       digitalWrite(7, HIGH);  // turn on led 
       Serial.println("6Done");
