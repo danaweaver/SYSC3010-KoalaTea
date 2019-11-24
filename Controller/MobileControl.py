@@ -3,8 +3,8 @@ import json, socket, sys, time, netifaces
 class MobileControl:
 
     def __init__(self):
-        self.mobilePort = 1060
-        self.mobileServerAddress = ("localhost", 3020) #netifaces.ifaddresses('wlan0')[netifaces .AF_INET][0]['addr']
+        self.mobilePort = 3020
+        self.mobileServerAddress = ("localhost", self.mobilePort) #netifaces.ifaddresses('wlan0')[netifaces .AF_INET][0]['addr']
     
 
     """
@@ -24,33 +24,29 @@ class MobileControl:
 
 
     """
-    Sends the teaId and status of the added custom tea to the Mobile Interface
+    Sends the teaId of the added custom tea to the Mobile Interface
     
     teaId - The teaId of the added custom tea
-    status - The success/failure status of the request
     sock - the Controller socket to send/receive the request/response 
     """
-    def addCustomTeaInformation(self, teaId, status, sock):
+    def addCustomTeaInformation(self, teaId, sock):
         jdata = {
             "msgId": 9,
-            "teaId": teaId,
-            "status": status
+            "teaId": teaId
         }
         self.sendData(jdata, sock)
 
 
     """
-    Sends the teaId and status of the removed custom tea to the Mobile Interface
+    Sends the teaId of the removed custom tea to the Mobile Interface
     
     teaId - The teaId of the added custom tea
-    status - The success/failure status of the request
     sock - the Controller socket to send/receive the request/response
     """
-    def removeCustomTeaInformation(self, teaId, status, sock):
+    def removeCustomTeaInformation(self, teaId, sock):
         jdata = {
             "msgId": 10,
-            "teaId": teaId,
-            "status": status
+            "teaId": teaId
         }
         self.sendData(jdata, sock)
     
@@ -58,13 +54,11 @@ class MobileControl:
     """
     Notify the Mobile Interface that the tea brewing process is complete
 
-    status - The success/failure status of the request
     sock - The Controller socket to send/receive the request/response
     """
-    def notifyUser(self, status, sock):
+    def notifyUser(self, sock):
         jdata = {
-            "msgId": 4,
-            "status": status
+            "msgId": 4
         }
         self.sendData(jdata, sock)
 

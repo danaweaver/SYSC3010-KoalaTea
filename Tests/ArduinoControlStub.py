@@ -1,13 +1,23 @@
-import json, socket, sys, time, serial
+import json, socket, sys, time, serial, pty, os 
 
-class ArduinoControl:
+class ArduinoControlTest:
 
     def __init__(self):
-        self.ser = serial.Serial('/dev/ttyACM0', 9600)
-    
+        #For testing purposes
+        self.masterA, self.slaveA = pty.openpty()
+        self.port = os.ttyname(self.slaveA)
+        print("ArduinoControl serial: " + self.port)
+        self.ser = serial.Serial()
+
+    def setSerialPort(self, port):
+        self.ser = serial.Serial(port)
+
+    def getSerialPort(self):
+        return self.port
+
 
     """
-    Request the Arduino to measure the temperature of the water water to the specified temperature
+    Request the Arduino to measure the temperature of the water to the specified temperature
     
     temp - specified temperature (float)
     """
@@ -15,7 +25,7 @@ class ArduinoControl:
         print("ArduinoControl sending tStart")
         self.ser.write("tStart".encode('utf-8'))
         while True:
-            data = ser.readline().decode('utf-8').strip('\r\n')
+            data = os.read(self.masterA, 1024).decode('utf-8')
             print("ArduinoControl received " + data)
             measTemp = float(data.split("T")[1])
             if measTemp >= temp:
@@ -79,17 +89,18 @@ class ArduinoControl:
 
 
     """
-    Request the Arduino to reset the IO devices to its original state 
-    (ie. stop the temperature measurement, raise the teabag, stop the timer, turn off the LED)
+    Reset the devices on the Arduino to its original state
     """
     def reset(self):
-        print("ArduinoControl sending 444")
-        self.ser.write("444".encode('utf-8'))
+        self.stopTemperature()
+        self.raiseTeaBag()
+        self.stopTimer()
+        self.turnOffLED()
 
 
     """
     Send the request to the Arduino and wait for the expected response
-    
+
     send - message to send to the Arduino (string)
     response - the expected message from the Arduino (string)
     """
@@ -97,7 +108,16 @@ class ArduinoControl:
         print("ArduinoControl sending " + send.encode('utf-8'))
         self.ser.write(send.encode('utf-8'))
         while True:
-            data = ser.readline().decode('utf-8').strip('\r\n')
+            data = os.read(self.masterA, 1024).decode('utf-8')
             print("ArduinoControl received " + data)
             if(data == response):
                 break
+
+def main():
+    ad = ArduinoControlTest()
+    ad.setSerialPort("/dev/pts/0") #set serial port to point to the temperature stub serial port
+    ad.measureWater(56)
+    
+
+if __name__ == "__main__":
+    main()

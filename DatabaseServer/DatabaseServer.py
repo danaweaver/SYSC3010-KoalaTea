@@ -11,8 +11,8 @@ send back the corresponding response message
 """
 class DatabaseServer:
     def  __init__(self):
-        self.sendPort = 1051
-        self.controllerAddr = ('localhost', 1050) # netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
+        self.databaseAddr = ('172.17.75.4', 1050)
+        self.controllerAddr = ('172.17.81.32', 1080) # netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
         # Initialize Connection and Logger objects
         self.connection = DatabaseConnection()
         self.logger = Logger()
@@ -24,7 +24,7 @@ class DatabaseServer:
     def receiveRequests(self):
         self.connection.checkDatabaseState()
         sReceive = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sReceive.bind(self.controllerAddr)
+        sReceive.bind(self.databaseAddr)
 
         while True:
             print ("Waiting to receive")
@@ -36,7 +36,7 @@ class DatabaseServer:
 
     """
     Execute desired actions by examining the received message contents
-    
+
     buf - Buffer of received message
     """
     def decipherReceivedPacket(self, buf):
@@ -64,7 +64,7 @@ class DatabaseServer:
                     self.sendResponse(responseData)
                 else: # Incorrect message format
                     self.logger.logErrorMessage()
-            elif payload["msgId"] == 12: # Add or remove a custom tea profile
+            elif payload["msgId"] == 12: # Remove a custom tea profile
                 if payload["teaId"]:
                     self.logger.logRemoveCustom(payload["teaId"])
                     # Remove from database
@@ -82,7 +82,7 @@ class DatabaseServer:
 
     """
     Get response format for retrieve information request
-    
+
     teas - All tea data in Tea table
     alarms - All alarm data in Alarm table
     """
@@ -93,30 +93,29 @@ class DatabaseServer:
                 "alarms": alarms
             }
         return json.dumps(x)
-    
-    
+
+
     """
     Get response format for adding profile request / removing profile request
     """
     def getAddRemoveProfileResponseFormat(self, msgId, teaId):
         x = {
                 "msgId": msgId,
-                "teaId": teaId,
-                "status": 1
+                "teaId": teaId
             }
         return json.dumps(x)
 
 
     """
     Send response message back to the Controller
-    
+
     payload - message to add to packet
     """
     def sendResponse(self, payload):
         sendSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        
+
         self.logger.logSendResponse(payload)
-        sendSocket.sendto(payload.encode('utf-8'), ('localhost', self.sendPort))
+        sendSocket.sendto(payload.encode('utf-8'), self.controllerAddr)
 
 
 def main():

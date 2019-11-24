@@ -5,7 +5,9 @@ when the Mobile Interface selects a specified tea profile and alarm. The full te
 Distributed Systems Unit Test. Some test checks must be the Controller Server to verify that the mock object sent the correct message.
 Another way to check if the mock object correctly sent the expected message is if the next test is running.
 
-Restrictions: The Serial port that will mock the Arduino must be set manually prior to running the script
+Restrictions: 
+    - The Serial port that will mock the Arduino must be set manually prior to running the script
+    - Need to use the ArduinoControlTest instead of ArduinoControl when starting the Controller to accommodate the virtual serial port
 
 """
 
@@ -73,8 +75,7 @@ testAddRequest = {
 
 testAddRepsonse = {
     "msgId": 11,
-    "teaId": 13,
-    "status": 1
+    "teaId": 13
 }
 
 testRemoveRequest = {
@@ -84,8 +85,7 @@ testRemoveRequest = {
 
 testRemoveResponse = {
     "msgId": 12,
-    "teaId": 13,
-    "status": 1
+    "teaId": 13
 }
 
 testSelectTeaAlarm = {
@@ -277,3 +277,5 @@ print("Received: " + buf.decode('utf-8') + "\n\n")
 print("Clean up sockets" + "\n\n")
 sData.close()
 sMobile.close()
+os.close(masterC)
+os.close(slaveC)
