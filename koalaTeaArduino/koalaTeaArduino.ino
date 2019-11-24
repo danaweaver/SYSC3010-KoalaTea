@@ -59,13 +59,13 @@ void loop() {
     }
     // lower and raise teabag
     else if(read == "50") {
-      //rotation(1);
+      rotation(1);
       delay(1000);
       Serial.println("lowerTea");
     }
     else if(read == "51") {
       delay(1000);
-      //rotation(0);
+      rotation(0);
       Serial.println("raiseTea"); 
     }
     // timer 
@@ -73,17 +73,19 @@ void loop() {
       lcd.setCursor(0, 1);  // column 0 of line 1 (2nd row)
       lcd.print("Time:");
       timer = read.substring(1).toInt(); // value after the 6 is the time in seconds
+      Serial.println(timer);
       secondsPassed = 0;
       unsigned long startTime = millis(); 
       while(timer != 0) {
         lcd.setCursor(7, 1);
-        if((millis() - startTime / 1000 > secondsPassed )){
+        if((millis() - startTime) / 1000 > secondsPassed ){
           timer--;
           secondsPassed++;
+          Serial.print(timer);
           lcd.print("   ");
           lcd.setCursor(7, 1);
         }
-        lcd.println(timer);
+        lcd.print(timer);
       }
       digitalWrite(7, HIGH);  // turn on led 
       Serial.println("6Done");
