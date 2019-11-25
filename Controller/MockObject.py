@@ -36,6 +36,10 @@ sMobile.bind(mobileServerAddress)
 contPort = 1080
 contServer_address = ("localhost", contPort) #10.0.0.21
 
+#Controller Cancel Address
+contCancelPort = 1075
+contCancelServer_address = ("localhost", contCancelPort)
+
 #Variables
 testPreset = {
         "msgId" : 3,
@@ -110,6 +114,15 @@ def checkTest(actual, expected):
     if (actual == expected):
         return "Pass"
     return "Fail"
+
+
+# jdata = {"msgId": 10, "teaId": 10}
+# data = json.dumps(jdata)
+# print("Sending: " + data)
+# sMobile.sendto(data.encode('utf-8'), contServer_address) #send CT to remove teaID 10
+
+
+
 
 # Test 1: 
 # Controller receives Mobile Interface preset request and queries Database Server
@@ -222,8 +235,8 @@ print("Test 8: " + checkTest(payload['msgId'], 4) + "\n\n")
 
 # Test : 9
 # The Mobile Interface acknowledges the notification which turns off the LED the alarm
-print("Wait 10 seconds before acknowledging")
-time.sleep(10)
+print("Wait 5 seconds before acknowledging")
+time.sleep(5)
 print("Test 9: The Mobile Interface acknowledges the notification which turns off the LED the alarm")
 print("------------------------------------------------------------------------------------------")
 print("MB sends CT a acknowledgment from the notification")
@@ -272,6 +285,25 @@ sData.sendto(data.encode('utf-8'), contServer_address)
 print("MB receives the acknowledgment from CT")
 buf, address = sMobile.recvfrom(1024)
 print("Received: " + buf.decode('utf-8') + "\n\n")
+
+# Test:
+# Controller receives Mobile Interface cancel request and acknowledges 
+print("Test: Controller receives Mobile Interface cancel request")
+print("-----------------------------------------------------------")
+print("MB requests preset teas and alarms from CT")
+jdata = {"msgId": 13}
+data = json.dumps(jdata)
+print("Sending: " + data)
+sMobile.sendto(data.encode('utf-8'), contCancelServer_address)
+print("MB receieves an acknowledgment from CT that the cancel operation is complete")
+buf, address = sMobile.recvfrom(1024)
+print("Received: " + buf.decode('utf-8'))
+payload = json.loads(buf.decode('utf-8'))
+print("Test: " + checkTest(payload['msgId'], 13) + "\n\n")
+
+# print("Test: Socket timeout on first attempt then success on the second attempt")
+# print("------------------------------------------------------------------------")
+
 
 # Clean up
 print("Clean up sockets" + "\n\n")

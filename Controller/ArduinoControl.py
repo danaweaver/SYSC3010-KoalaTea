@@ -88,6 +88,14 @@ class ArduinoControl:
 
 
     """
+    Notify the Arduino that an error had occur in the system
+    """
+    def error(self):
+        print("ArduinoControl sending 888")
+        self.ser.write("888".encode('utf-8'))
+
+
+    """
     Send the request to the Arduino and wait for the expected response
     
     send - message to send to the Arduino (string)

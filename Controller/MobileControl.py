@@ -62,6 +62,30 @@ class MobileControl:
         }
         self.sendData(jdata, sock)
 
+    
+    """
+    Notifies user that cancel request has been processed
+
+    sock - The Controller socket to send/receive the request/reponse
+    """
+    def notifyUserCancel(self, sock):
+        jdata = {
+            "msgId": 13
+        }
+        self.sendData(jdata,sock) #NOTE: Right now we're sending back the cancel response on the normal socket, don't know if thats what we wants
+
+
+    """
+    Notifies user that an error occured
+
+    sock - The Controller socket to send/receive the request/reponse
+    """
+    def notifyUserError(self, sock):
+        jdata = {
+            "msgId": 14
+        }
+        self.sendData(jdata,sock)
+
 
     """
     Send the request to the Mobile Interface and wait for the expected response

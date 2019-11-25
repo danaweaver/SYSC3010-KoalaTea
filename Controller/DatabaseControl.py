@@ -14,7 +14,7 @@ class DatabaseControl:
     """
     def getTeaAlarmInformation(self, sock):
         jdata = {"msgId": 3}
-        return self.sendReceive(jdata, sock)
+        return self.sendReceive(jdata, 3, sock)
 
 
     """
@@ -35,7 +35,7 @@ class DatabaseControl:
                 "temp": temp
             }
         }
-        return self.sendReceive(jdata, sock)
+        return self.sendReceive(jdata, 11, sock)
 
 
     """
@@ -50,20 +50,37 @@ class DatabaseControl:
             "msgId": 12,
             "teaId": teaID
         }
-        return self.sendReceive(jdata, sock)
+        return self.sendReceive(jdata, 12, sock)
 
 
     """
     Send the request to the Database Server and wait for the expected response
 
     jdata - json message to send to the Database
+    expMsgId - the expected msgId received from the Database
     sock - the controller socket to send to the Database
     """
-    def sendReceive(self, jdata, sock):
-        data = json.dumps(jdata)
-        print("DatabaseControl sending: " + data)
-        sock.sendto(data.encode('utf-8'), self.dbServerAddress)
-        buf, address = sock.recvfrom(1024)
-        response = buf.decode('utf-8')
-        print("DatabaseControl received: " + response)
-        return response
+    def sendReceive(self, jdata, expMsgId, sock):
+        sock.settimeout(10) #Set socket timeout for socket to check from dropped packets from the Database
+        repeat = 0
+        while repeat < 2: #Will send to the Database a max of 2 times
+            data = json.dumps(jdata)
+            print("DatabaseControl sending: " + data)
+            sock.sendto(data.encode('utf-8'), self.dbServerAddress)
+            try: 
+                buf, address = sock.recvfrom(1024)
+                response = buf.decode('utf-8')
+                print("DatabaseControl received: " + response)
+                actMsgId = json.loads(response)['msgId']
+                if actMsgId == expMsgId:
+                    sock.settimeout(None) #reset socket timeout
+                    return response
+                else:
+                    print("Attempt #" + str(repeat + 1) + ": Recieved an unexpected msgId. Expected: " + str(expMsgId) + ". Actual: " + str(actMsgId) + ".")
+            except socket.timeout:
+                print("Attempt #" + str(repeat + 1) + ": Socket timeout out after 10 seconds while waiting for a response from the Database Server.")
+            repeat += 1
+        #If come out here, sendReceive has failed
+        print("Failed to send/receive data to/from the Database.")
+        sock.settimeout(None) #reset socket timeout
+        return False
