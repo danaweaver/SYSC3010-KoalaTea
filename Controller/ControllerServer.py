@@ -9,11 +9,12 @@ from Cancel import Cancel
 
 class ControllerServer:
     def __init__(self):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sData = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sMobile = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sCancel = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.serverPort = 1080
-        self.server_address = ("localhost", self.serverPort) #netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
-        self.cancel = False
+        self.eth_address = ("10.0.0.21", self.serverPort) #netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
+        self.wifi_address = ("192.168.43.248", self.serverPort)
         # Initialize the control objects
         self.arduinoControl = ArduinoControl()
         #self.arduinoControl = ArduinoControlTest() #for testing only
@@ -28,11 +29,12 @@ class ControllerServer:
     Receive Controller requests from the other processes to process
     """
     def receiveRequests(self):
-        self.s.bind(self.server_address)
+        self.sMobile.bind(self.wifi_address)
+        self.sData.bind(self.eth_address)
 
         while True:
             print("Waiting to receive on port %d" % self.serverPort)
-            buf, addr = self.s.recvfrom(1024)
+            buf, addr = self.sMobile.recvfrom(1024)
             self.decipherReceivedPacket(buf)
 
 
@@ -45,29 +47,30 @@ class ControllerServer:
         print("Received: " + buf.decode('utf-8'))
         payload = json.loads(buf.decode('utf-8'))
         if payload['msgId'] == 2: # Mobile requests preset tea and alarms
-            responseData = self.databaseControl.getTeaAlarmInformation(self.s) #get tea and alarm from Database
+            responseData = self.databaseControl.getTeaAlarmInformation(self.sData) #get tea and alarm from Database
             if responseData:
                 data = json.loads(responseData)
-                self.mobileControl.retrieveTeaInfoAndAlarm(data['teas'], data['alarms'], self.s) #send tea and alarm to Mobile
+                self.mobileControl.retrieveTeaInfoAndAlarm(data['teas'], data['alarms'], self.sMobile) #send tea and alarm to Mobile
             else:
                 self.error()
         elif payload['msgId'] == 4: # Mobile selected a specified tea and alarm
             # self.arduinoControl.setSerialPort() #for testing only
+            self.mobileControl.ackSelect(self.sMobile)
             self.startTeaProcess(payload['tea'], payload['alarm'])
         elif payload['msgId'] == 8: # Mobile acknowledges the notification sent
             self.reset()
         elif payload['msgId'] == 9: # Mobile request to add custom tea information
-            responseData = self.databaseControl.addCustomTeaInformation(payload['tea']['name'], payload['tea']["steepTime"], payload['tea']['temp'], self.s)
+            responseData = self.databaseControl.addCustomTeaInformation(payload['tea']['name'], payload['tea']["steepTime"], payload['tea']['temp'], self.sData)
             if responseData:
                 data = json.loads(responseData)
-                self.mobileControl.addCustomTeaInformation(data['teaId'], self.s)
+                self.mobileControl.addCustomTeaInformation(data['teaId'], self.sMobile)
             else:
                 self.error()
         elif payload['msgId'] == 10: # Mobile request to remove custom tea information
-            responseData = self.databaseControl.removeCustomTeaInformation(payload['teaId'], self.s)
+            responseData = self.databaseControl.removeCustomTeaInformation(payload['teaId'], self.sData)
             if responseData:
                 data = json.loads(responseData)
-                self.mobileControl.removeCustomTeaInformation(data['teaId'], self.s)
+                self.mobileControl.removeCustomTeaInformation(data['teaId'], self.sMobile)
             else:
                 self.error()
         elif payload['msgId'] == 13: # Mobile request to cancel the brewing process
@@ -83,15 +86,19 @@ class ControllerServer:
     alarm - the specified alarm
     """
     def startTeaProcess(self, tea, alarm):
-        self.switchControl.turnOnKettle()
+        if not self.switchControl.turnOnKettle():
+            self.error()
+            return
         self.arduinoControl.measureWater(tea['temp'])
-        self.switchControl.turnOffKettle()
+        time.sleep(3)
+        if not self.switchControl.turnOffKettle():
+            self.error()
+            return
         self.arduinoControl.lowerTeaBag()
         self.arduinoControl.displayTimer(tea["steepTime"])
         self.arduinoControl.raiseTeaBag()
-        self.arduinoControl.turnOnLED() #TODO: Maybe need to remove since Kevin already added it into the AD code
         self.speakerControl.playAlarm(alarm['fileLocation'])
-        self.mobileControl.notifyUser(self.s)
+        self.mobileControl.notifyUser(self.sMobile)
 
 
     """
@@ -108,7 +115,7 @@ class ControllerServer:
     """
     def cancelThread(self):
         print("STARTING THREAD")
-        self.sCancel.bind(('localhost', 1075))
+        self.sCancel.bind(('192.168.43.248', 1075))
 
         while self.cancel.getCancel() != 1:
             print("Waiting to receive on port 1075")
@@ -131,8 +138,9 @@ class ControllerServer:
     """
     def error(self):
         print('An error occured in the system. Resetting controls...')
-        self.mobileControl.notifyUserError(self.s)
-        #self.arduinoControl.showError()
+        self.mobileControl.notifyUserError(self.sMobile)
+        self.arduinoControl.error()
+        self.speakerControl.stopAlarm()
         #TODO: Add the other stuff for the error (ie Arduino, speaker etc.)
         print('Controls have completely reseted.')
 

@@ -15,7 +15,7 @@ class ArduinoControl:
         print("ArduinoControl sending tStart")
         self.ser.write("tStart".encode('utf-8'))
         while True:
-            data = ser.readline().decode('utf-8').strip('\r\n')
+            data = self.ser.readline().decode('utf-8').strip('\r\n')
             print("ArduinoControl received " + data)
             measTemp = float(data.split("T")[1])
             if measTemp >= temp:
@@ -102,10 +102,10 @@ class ArduinoControl:
     response - the expected message from the Arduino (string)
     """
     def sendReceive(self, send, response):
-        print("ArduinoControl sending " + send.encode('utf-8'))
+        print("ArduinoControl sending " + send)
         self.ser.write(send.encode('utf-8'))
         while True:
-            data = ser.readline().decode('utf-8').strip('\r\n')
+            data = self.ser.readline().decode('utf-8').strip('\r\n')
             print("ArduinoControl received " + data)
             if(data == response):
                 break
