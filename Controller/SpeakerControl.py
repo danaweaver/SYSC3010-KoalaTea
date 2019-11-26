@@ -6,13 +6,13 @@ class SpeakerControl:
         mixer.init()
 
     """
-    Play alarm song from the specified file
+    Play alarm song from the specified file on a loop
     
     fileLocation - the file location of the alarm song (string)
     """
     def playAlarm(self, fileLocation):
         mixer.music.load(fileLocation)
-        mixer.music.play()
+        mixer.music.play(-1)
 
 
     """

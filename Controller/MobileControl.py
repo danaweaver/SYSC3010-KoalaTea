@@ -4,7 +4,7 @@ class MobileControl:
 
     def __init__(self):
         self.mobilePort = 3020
-        self.mobileServerAddress = ("localhost", self.mobilePort) #netifaces.ifaddresses('wlan0')[netifaces .AF_INET][0]['addr']
+        self.mobileServerAddress = ("192.168.43.57", self.mobilePort)
     
 
     """
@@ -50,6 +50,18 @@ class MobileControl:
         }
         self.sendData(jdata, sock)
     
+    
+    """
+    Acknowledge the msgId  4 request from the Mobile Interface
+
+    sock - The Controller socket to send/receive the request/response
+    """
+    def ackSelect(self, sock):
+        jdata = {
+            "msgId": 40
+        }
+        self.sendData(jdata, sock)
+        
 
     """
     Notify the Mobile Interface that the tea brewing process is complete
@@ -72,7 +84,7 @@ class MobileControl:
         jdata = {
             "msgId": 13
         }
-        self.sendData(jdata,sock) #NOTE: Right now we're sending back the cancel response on the normal socket, don't know if thats what we wants
+        self.sendData(jdata,sock)
 
 
     """
