@@ -108,9 +108,9 @@ void loop() {
       }
       else{
         lcd.print("Tea is ready");
-        digitalWrite(7, HIGH);  // turn on led to signify finishing  
+        digitalWrite(7, HIGH);  // turn on led to signify finishing
+        Serial.println("6Done");  
       }
-      Serial.println("6Done");
     }
     // led
     else if(read == "70") {
