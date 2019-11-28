@@ -17,6 +17,7 @@ Stepper stepper (STEPS, 8, 10, 9, 11);
 String read;
 int timer = 0;
 int secondsPassed = 0;
+bool cancel = false;
 
 void setup() {
   Serial.begin(9600);
@@ -40,14 +41,21 @@ bool tempStop() {
   String data;
   if(Serial.available() > 0) {
     data = Serial.readStringUntil('\n');
-    if(data == "tStop") {return true;}
+    if(data == "tStop" || data == "444") {  // stops temperature reading if received stop or cancel
+      if(data == "444") {
+        Serial.println("444");  
+      }
+      return true;
+    }
   }
   return false;
 }
 
 void loop() {
+  cancel = false;
   if(Serial.available() > 0){
-    digitalWrite(7, HIGH);  // turn on led
+    lcd.setCursor(0, 1);  // column 0 of line 1 (2nd row)
+    lcd.print("              ");  //clear bottom line
     read = Serial.readStringUntil('\n'); 
     // temperature reading
     if(read == "tStart") {
@@ -70,7 +78,7 @@ void loop() {
     }
     // timer 
     else if(read.charAt(0) == '6') {
-      lcd.setCursor(0, 1);  // column 0 of line 1 (2nd row)
+      lcd.setCursor(0, 1);
       lcd.print("Time:");
       timer = read.substring(1).toInt(); // value after the 6 is the time in seconds
       Serial.println(timer);
@@ -78,23 +86,51 @@ void loop() {
       unsigned long startTime = millis(); 
       while(timer != 0) {
         lcd.setCursor(7, 1);
+        if(Serial.available() > 0) {
+          read = Serial.readStringUntil('\n');
+          if(read == "444") {
+            cancel = true;
+            break;  
+          }
+        }
         if((millis() - startTime) / 1000 > secondsPassed ){
           timer--;
           secondsPassed++;
-          Serial.print(timer);
+          //Serial.print(timer);
           lcd.print("   ");
           lcd.setCursor(7, 1);
         }
         lcd.print(timer);
       }
-      digitalWrite(7, HIGH);  // turn on led 
-      Serial.println("6Done");
+      lcd.setCursor(0, 1);
+      if(cancel){
+        lcd.print("Cancelled");
+      }
+      else{
+        lcd.print("Tea is ready");
+        digitalWrite(7, HIGH);  // turn on led to signify finishing
+        Serial.println("6Done");  
+      }
+    }
+    // led
+    else if(read == "70") {
+      digitalWrite(7, LOW);
+    }
+    // error
+    else if(read == "888"){
+      lcd.setCursor(0, 1);
+      lcd.print("Error occurred");
+    }
+    // cancel / reset
+    if(read == "444" || cancel) {
+      digitalWrite(7, LOW);
+      rotation(0);
     }
   }
 }
 
 void rotation(bool direction){  
-  // clockwise if 1 counterclockwise if 0
+  // lower tea bag if 1 raise tea bag if 0
   if (direction) {
     stepper.step(2048);
   }
