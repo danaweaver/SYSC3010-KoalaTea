@@ -11,8 +11,8 @@ send back the corresponding response message
 """
 class DatabaseServer:
     def  __init__(self):
-        self.databaseAddr = ('172.17.75.4', 1050)
-        self.controllerAddr = ('172.17.81.32', 1080) # netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
+        self.databaseAddr = ('10.0.0.22', 1050)
+        self.controllerAddr = ('10.0.0.21', 1080)
         # Initialize Connection and Logger objects
         self.connection = DatabaseConnection()
         self.logger = Logger()
@@ -40,8 +40,6 @@ class DatabaseServer:
     buf - Buffer of received message
     """
     def decipherReceivedPacket(self, buf):
-        # TODO: remove print below - for testing
-        print("Received: " + buf.decode('utf-8'))
         payload = json.loads(buf.decode('utf-8'))
         if "msgId" in payload:
             if payload['msgId'] == 3: # Retrieve all teas and alarm information

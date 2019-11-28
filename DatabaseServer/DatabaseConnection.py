@@ -7,8 +7,9 @@ DatabaseConnection class intializes and performs all actions on the database
 """
 class DatabaseConnection:
     def __init__(self):
-        self.databasePath = r"C:\Users\Dana Weaver\Desktop\School\Fourth Year\SYSC3010\SYSC3010-KoalaTea\KoalaTea.db"
-        #self.databasePath = r"/home/pi/Desktop/Dana/SYSC3010-KoalaTea/DatabaseServer/KoalaTea.db"
+        #database path used for testing on Windows
+        #self.databasePath = r"C:\Users\Dana Weaver\Desktop\School\Fourth Year\SYSC3010\SYSC3010-KoalaTea\KoalaTea.db"
+        self.databasePath = r"/home/pi/Desktop/SYSC3010-KoalaTea/DatabaseServer/KoalaTea.db"
         self.conn = self.createConnection()
 
     """
