@@ -10,7 +10,7 @@ class Cancel:
         self.cancel = 0 # Cancel request has not occurred, set to 0
 
     """
-    Check if state of cancel
+    Check the state of cancel
     """
     def getCancel(self):
         self.lock.acquire()
@@ -20,6 +20,8 @@ class Cancel:
 
     """
     Set cancel state
+
+    val - int 
     """
     def setCancel(self, val):
         self.lock.acquire()
