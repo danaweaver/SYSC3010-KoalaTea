@@ -13,10 +13,12 @@ class ArduinoControl:
     """
     def measureWater(self, temp):
         print("ArduinoControl sending tStart")
-        self.ser.write("tStart".encode('utf-8'))
+        self.ser.write("tStart\n".encode('utf-8'))
         while True:
             data = self.ser.readline().decode('utf-8').strip('\r\n')
             print("ArduinoControl received " + data)
+            if data == "444": #User has requested to cancel so exit out of the function
+                return
             measTemp = float(data.split("T")[1])
             if measTemp >= temp:
                 break
@@ -28,21 +30,21 @@ class ArduinoControl:
     """
     def stopTemperature(self):
         print("ArduinoControl sending tStop")
-        self.ser.write("tStop".encode('utf-8'))
+        self.ser.write("tStop\n".encode('utf-8'))
     
 
     """
     Request the Arduino to lower the tea bag
     """
     def lowerTeaBag(self):
-        self.sendReceive("50", "lowerTea")
+        self.sendReceive("50\n", "lowerTea")
 
 
     """
     Request the Arduino to raise the tea bag
     """
     def raiseTeaBag(self):
-        self.sendReceive("51", "raiseTea")
+        self.sendReceive("51\n", "raiseTea")
 
 
     """
@@ -51,7 +53,7 @@ class ArduinoControl:
     time - the specified time in seconds (int)
     """
     def displayTimer(self, time):
-        self.sendReceive("6" + str(time), "6Done")
+        self.sendReceive("6" + str(time) + "\n", "6Done")
     
 
     """
@@ -59,7 +61,7 @@ class ArduinoControl:
     """
     def stopTimer(self):
         print("ArduinoControl sending 6Stop")
-        self.ser.write("6Stop".encode('utf-8'))
+        self.ser.write("6Stop\n".encode('utf-8'))
 
 
     """
@@ -67,7 +69,7 @@ class ArduinoControl:
     """
     def turnOnLED(self):
         print("ArduinoControl sending 71")
-        self.ser.write("71".encode('utf-8'))
+        self.ser.write("71\n".encode('utf-8'))
 
 
     """
@@ -75,7 +77,7 @@ class ArduinoControl:
     """
     def turnOffLED(self):
         print("ArduinoControl sending 70")
-        self.ser.write("70".encode('utf-8'))
+        self.ser.write("70\n".encode('utf-8'))
 
 
     """
@@ -84,7 +86,7 @@ class ArduinoControl:
     """
     def reset(self):
         print("ArduinoControl sending 444")
-        self.ser.write("444".encode('utf-8'))
+        self.ser.write("444\n".encode('utf-8'))
 
 
     """
@@ -92,7 +94,7 @@ class ArduinoControl:
     """
     def error(self):
         print("ArduinoControl sending 888")
-        self.ser.write("888".encode('utf-8'))
+        self.ser.write("888\n".encode('utf-8'))
 
 
     """

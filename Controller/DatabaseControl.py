@@ -4,7 +4,7 @@ class DatabaseControl:
 
     def __init__(self):
         self.dbPort = 1050
-        self.dbServerAddress = ("localhost", 1050) #netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
+        self.dbServerAddress = ("10.0.0.22", 1050)
     
     """
     Retrieves all the Teas and Alarms from the Database Server 
@@ -61,7 +61,7 @@ class DatabaseControl:
     sock - the controller socket to send to the Database
     """
     def sendReceive(self, jdata, expMsgId, sock):
-        sock.settimeout(10) #Set socket timeout for socket to check from dropped packets from the Database
+        sock.settimeout(5) #Set socket timeout for socket to check from dropped packets from the Database
         repeat = 0
         while repeat < 2: #Will send to the Database a max of 2 times
             data = json.dumps(jdata)
@@ -78,7 +78,7 @@ class DatabaseControl:
                 else:
                     print("Attempt #" + str(repeat + 1) + ": Recieved an unexpected msgId. Expected: " + str(expMsgId) + ". Actual: " + str(actMsgId) + ".")
             except socket.timeout:
-                print("Attempt #" + str(repeat + 1) + ": Socket timeout out after 10 seconds while waiting for a response from the Database Server.")
+                print("Attempt #" + str(repeat + 1) + ": Socket timeout out after 5 seconds while waiting for a response from the Database Server.")
             repeat += 1
         #If come out here, sendReceive has failed
         print("Failed to send/receive data to/from the Database.")
