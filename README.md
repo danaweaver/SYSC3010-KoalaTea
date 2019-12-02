@@ -27,6 +27,10 @@ $ git clone https://github.com/danaweaver/SYSC3010-KoalaTea.git
 $ cd SYSC3010-KoalaTea
 - Open SwitchControl.py and change the EMAIL and PASSWORD variables
   to the smart switch login information
+- Run the ControllerServer program:
+$ python Controller/ControllerServer.py
 
 Setting up the Arduino:
-****ADD INSTRUCTIONS HERE*****
+- Download and install arduino onto Raspberry Pi #2
+- Open up the arduino program
+- Run the ino file located in /koalaTeaArduino
