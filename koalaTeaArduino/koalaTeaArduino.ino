@@ -18,6 +18,7 @@ String read;
 int timer = 0;
 int secondsPassed = 0;
 bool cancel = false;
+bool lowered = false;
 
 void setup() {
   Serial.begin(9600);
@@ -96,7 +97,7 @@ void loop() {
         if((millis() - startTime) / 1000 > secondsPassed ){
           timer--;
           secondsPassed++;
-          //Serial.print(timer);
+          Serial.println(timer);
           lcd.print("   ");
           lcd.setCursor(7, 1);
         }
@@ -109,8 +110,8 @@ void loop() {
       else{
         lcd.print("Tea is ready");
         digitalWrite(7, HIGH);  // turn on led to signify finishing
-        Serial.println("6Done");  
       }
+      Serial.println("6Done");  
     }
     // led
     else if(read == "70") {
@@ -123,8 +124,10 @@ void loop() {
     }
     // cancel / reset
     if(read == "444" || cancel) {
+      if(lowered){  // prevents raising tea when already raised
+        rotation(0);
+      }
       digitalWrite(7, LOW);
-      rotation(0);
     }
   }
 }
@@ -132,9 +135,11 @@ void loop() {
 void rotation(bool direction){  
   // lower tea bag if 1 raise tea bag if 0
   if (direction) {
+    lowered = true;
     stepper.step(2048);
   }
   else {
+    lowered = false;
     stepper.step(-2048);
   }
 }
