@@ -33,7 +33,7 @@ class ControllerServer:
         self.sData.bind(self.eth_address)
 
         while True:
-            print("Waiting to receive on port %d" % self.serverPort)
+            print("\nWaiting to receive on port %d" % self.serverPort)
             buf, addr = self.sMobile.recvfrom(1024)
             self.decipherReceivedPacket(buf)
 
@@ -56,7 +56,10 @@ class ControllerServer:
         elif payload['msgId'] == 4: # Mobile selected a specified tea and alarm
             # self.arduinoControl.setSerialPort() #for testing only
             self.mobileControl.ackSelect(self.sMobile)
-            self.startTeaProcess(payload['tea'], payload['alarm'])
+            retval = self.startTeaProcess(payload['tea'], payload['alarm'])
+            if retval == None: #Mobile requested to cancel
+                self.mobileControl.notifyUserCancel(self.sCancel)
+                self.cancel.setCancel(0) # Re-enable cancel
         elif payload['msgId'] == 8: # Mobile acknowledges the notification sent
             self.reset()
         elif payload['msgId'] == 9: # Mobile request to add custom tea information
@@ -73,8 +76,6 @@ class ControllerServer:
                 self.mobileControl.removeCustomTeaInformation(data['teaId'], self.sMobile)
             else:
                 self.error()
-        elif payload['msgId'] == 13: # Mobile request to cancel the brewing process
-            self.cancel() #TODO: Remove the 13 check because the other socket will handle it
         else:
             print("Controller received an invalid msgId of " + str(payload['msgId']) + ". Ignoring the packet...")
 
@@ -84,21 +85,41 @@ class ControllerServer:
     
     tea - the specified tea
     alarm - the specified alarm
+    
+    return - True = successfuly complete, False = kettle error, None = cancel applied
     """
     def startTeaProcess(self, tea, alarm):
         if not self.switchControl.turnOnKettle():
+            print('Kettle not available')
             self.error()
-            return
-        self.arduinoControl.measureWater(tea['temp'])
-        time.sleep(3)
+            return False
+
+        if not self.checkCancel(): self.arduinoControl.measureWater(tea['temp'])
+        else: return
+
+        #TODO: a way to remove this sleep is that there is an ACK from the Arduino after CT sends tStop
+        time.sleep(0.5) 
+
         if not self.switchControl.turnOffKettle():
             self.error()
-            return
-        self.arduinoControl.lowerTeaBag()
-        self.arduinoControl.displayTimer(tea["steepTime"])
-        self.arduinoControl.raiseTeaBag()
-        self.speakerControl.playAlarm(alarm['fileLocation'])
-        self.mobileControl.notifyUser(self.sMobile)
+            return False
+        
+        if not self.checkCancel(): self.arduinoControl.lowerTeaBag()
+        else: return
+        
+        if not self.checkCancel(): self.arduinoControl.displayTimer(tea["steepTime"])
+        else: return
+        
+        if not self.checkCancel(): self.arduinoControl.raiseTeaBag()
+        else: return
+        
+        if not self.checkCancel(): self.speakerControl.playAlarm(alarm['fileLocation'])
+        else: return
+        
+        if not self.checkCancel(): self.mobileControl.notifyUser(self.sMobile)
+        else: return
+        
+        return True
 
 
     """
@@ -117,20 +138,31 @@ class ControllerServer:
         print("STARTING THREAD")
         self.sCancel.bind(('192.168.43.248', 1075))
 
-        while self.cancel.getCancel() != 1:
-            print("Waiting to receive on port 1075")
+        while True:
+            print("\nWaiting to receive on port 1075")
             buf, addr = self.sCancel.recvfrom(1024)
             payload = json.loads(buf.decode('utf-8'))
             print("Controller Cancel Socket Receieved: " + buf.decode('utf-8'))
             if payload["msgId"] == 13:
                 self.cancel.setCancel(1)
                 self.arduinoControl.reset()
-                self.reset() # I think we also need this call for the alarm (<-- the alarm is truned off here already?)
-                # time.sleep(2)
-                self.mobileControl.notifyUserCancel(self.sCancel)
-                self.cancel.setCancel(0) # Re-enable cancel
+                self.reset()
                 print("Controller Cancel operation complete!")
 
+
+    """
+    Checks the cancel state if the user requested to cancel.
+    If the cancel state is 1 then reset the Arduino, turn off the kettle and stop the alarm
+
+    return - True if the user requested to cancel, false otherwise
+    """
+    def checkCancel(self):
+        if (self.cancel.getCancel()):
+            self.arduinoControl.reset()
+            self.switchControl.turnOffKettle()
+            self.speakerControl.stopAlarm()
+            return True
+        return False
 
     """
     Cancels tea brewing process, resets Arduino controls and speaker and notifies
@@ -141,7 +173,6 @@ class ControllerServer:
         self.mobileControl.notifyUserError(self.sMobile)
         self.arduinoControl.error()
         self.speakerControl.stopAlarm()
-        #TODO: Add the other stuff for the error (ie Arduino, speaker etc.)
         print('Controls have completely reseted.')
 
 
