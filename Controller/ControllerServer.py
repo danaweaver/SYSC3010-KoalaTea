@@ -13,8 +13,8 @@ class ControllerServer:
         self.sMobile = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sCancel = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.serverPort = 1080
-        self.eth_address = ("10.0.0.21", self.serverPort) #netifaces.ifaddresses('eth0')[netifaces .AF_INET][0]['addr']
-        self.wifi_address = ("192.168.43.248", self.serverPort)
+        self.eth_address = ("10.0.0.21", self.serverPort) 
+        self.wifi_address = (netifaces.ifaddresses('wlan0')[netifaces .AF_INET][0]['addr'], self.serverPort) #"192.168.43.248"
         # Initialize the control objects
         self.arduinoControl = ArduinoControl()
         #self.arduinoControl = ArduinoControlTest() #for testing only
@@ -35,7 +35,7 @@ class ControllerServer:
         while True:
             print("\nWaiting to receive on port %d" % self.serverPort)
             buf, addr = self.sMobile.recvfrom(1024)
-            self.decipherReceivedPacket(buf)
+            self.decipherReceivedPacket(buf, addr)
 
 
     """
@@ -43,22 +43,22 @@ class ControllerServer:
     
     buf - Buffer of received message
     """
-    def decipherReceivedPacket(self, buf):
+    def decipherReceivedPacket(self, buf, addr):
         print("Received: " + buf.decode('utf-8'))
         payload = json.loads(buf.decode('utf-8'))
         if payload['msgId'] == 2: # Mobile requests preset tea and alarms
             responseData = self.databaseControl.getTeaAlarmInformation(self.sData) #get tea and alarm from Database
             if responseData:
                 data = json.loads(responseData)
-                self.mobileControl.retrieveTeaInfoAndAlarm(data['teas'], data['alarms'], self.sMobile) #send tea and alarm to Mobile
+                self.mobileControl.retrieveTeaInfoAndAlarm(data['teas'], data['alarms'], self.sMobile, addr) #send tea and alarm to Mobile
             else:
-                self.error()
+                self.error(addr)
         elif payload['msgId'] == 4: # Mobile selected a specified tea and alarm
             # self.arduinoControl.setSerialPort() #for testing only
-            self.mobileControl.ackSelect(self.sMobile)
-            retval = self.startTeaProcess(payload['tea'], payload['alarm'])
+            self.mobileControl.ackSelect(self.sMobile, addr)
+            retval = self.startTeaProcess(payload['tea'], payload['alarm'], addr)
             if retval == None: #Mobile requested to cancel
-                self.mobileControl.notifyUserCancel(self.sCancel)
+                self.mobileControl.notifyUserCancel(self.sCancel, addr)
                 self.cancel.setCancel(0) # Re-enable cancel
         elif payload['msgId'] == 8: # Mobile acknowledges the notification sent
             self.reset()
@@ -66,16 +66,16 @@ class ControllerServer:
             responseData = self.databaseControl.addCustomTeaInformation(payload['tea']['name'], payload['tea']["steepTime"], payload['tea']['temp'], self.sData)
             if responseData:
                 data = json.loads(responseData)
-                self.mobileControl.addCustomTeaInformation(data['teaId'], self.sMobile)
+                self.mobileControl.addCustomTeaInformation(data['teaId'], self.sMobile, addr)
             else:
-                self.error()
+                self.error(addr)
         elif payload['msgId'] == 10: # Mobile request to remove custom tea information
             responseData = self.databaseControl.removeCustomTeaInformation(payload['teaId'], self.sData)
             if responseData:
                 data = json.loads(responseData)
-                self.mobileControl.removeCustomTeaInformation(data['teaId'], self.sMobile)
+                self.mobileControl.removeCustomTeaInformation(data['teaId'], self.sMobile, addr)
             else:
-                self.error()
+                self.error(addr)
         else:
             print("Controller received an invalid msgId of " + str(payload['msgId']) + ". Ignoring the packet...")
 
@@ -88,20 +88,17 @@ class ControllerServer:
     
     return - True = successfuly complete, False = kettle error, None = cancel applied
     """
-    def startTeaProcess(self, tea, alarm):
+    def startTeaProcess(self, tea, alarm, addr):
         if not self.switchControl.turnOnKettle():
             print('Kettle not available')
-            self.error()
+            self.error(addr)
             return False
 
         if not self.checkCancel(): self.arduinoControl.measureWater(tea['temp'])
-        else: return
-
-        #TODO: a way to remove this sleep is that there is an ACK from the Arduino after CT sends tStop
-        time.sleep(0.5) 
+        else: return 
 
         if not self.switchControl.turnOffKettle():
-            self.error()
+            self.error(addr)
             return False
         
         if not self.checkCancel(): self.arduinoControl.lowerTeaBag()
@@ -116,18 +113,19 @@ class ControllerServer:
         if not self.checkCancel(): self.speakerControl.playAlarm(alarm['fileLocation'])
         else: return
         
-        if not self.checkCancel(): self.mobileControl.notifyUser(self.sMobile)
+        if not self.checkCancel(): self.mobileControl.notifyUser(self.sMobile, addr)
         else: return
         
         return True
 
 
     """
-    Reset the process (ie. turn off the LED and stop the alarm)
+    Reset the process (ie. turn off the LED, stop the alarm and turn off the kettle)
     """
     def reset(self):
         self.arduinoControl.turnOffLED()
         self.speakerControl.stopAlarm()
+        self.switchControl.turnOffKettle()
 
 
     """
@@ -146,21 +144,18 @@ class ControllerServer:
             if payload["msgId"] == 13:
                 self.cancel.setCancel(1)
                 self.arduinoControl.reset()
-                self.reset()
                 print("Controller Cancel operation complete!")
 
 
     """
     Checks the cancel state if the user requested to cancel.
-    If the cancel state is 1 then reset the Arduino, turn off the kettle and stop the alarm
+    If the cancel state is 1 then reset the system
 
     return - True if the user requested to cancel, false otherwise
     """
     def checkCancel(self):
         if (self.cancel.getCancel()):
-            self.arduinoControl.reset()
-            self.switchControl.turnOffKettle()
-            self.speakerControl.stopAlarm()
+            self.reset()
             return True
         return False
 
@@ -168,11 +163,12 @@ class ControllerServer:
     Cancels tea brewing process, resets Arduino controls and speaker and notifies
     user that there was an error in the process
     """
-    def error(self):
+    def error(self, addr):
         print('An error occured in the system. Resetting controls...')
-        self.mobileControl.notifyUserError(self.sMobile)
+        self.mobileControl.notifyUserError(self.sMobile, addr)
         self.arduinoControl.error()
-        self.speakerControl.stopAlarm()
+        self.reset()
+        #TODO: Remove this if working: self.speakerControl.stopAlarm()
         print('Controls have completely reseted.')
 
 
