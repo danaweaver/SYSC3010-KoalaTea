@@ -6,6 +6,7 @@ import 'react-native';
 import React from 'react';
 import { AddTea } from '../AddTea.js';
 import { shallow } from 'enzyme';
+import * as socketUtil from '../socketUtil';
 
 const mockInput = [
     {
@@ -92,20 +93,24 @@ describe('Submitting new tea profile', () => {
   wrapper.setProps({ 
     navigation: { 
       state: { params: { teas: [] }}, 
-      navigate: jest.fn((screen, data) => newTeaProfileArray = data.teas)
+      // navigate: jest.fn((screen, data) => newTeaProfileArray = data.teas)
     }
   })
   beforeEach(() => {
     newTeaProfileArray = [];
+    socketUtil.send = jest.fn()
+    socketUtil.listen = jest.fn()
   })
   it('input validation - success', () => {
     instance.validateInputs = jest.fn(() => true)
     instance.onSubmit()
-    expect(newTeaProfileArray.length).toBe(1)
+    expect(socketUtil.send).toBeCalled()
+    expect(socketUtil.listen).toBeCalled()
   }) 
   it('input validation - fail', () => {
     instance.validateInputs = jest.fn(() => false)
     instance.onSubmit()
-    expect(newTeaProfileArray.length).toBe(0)
+    expect(socketUtil.send).not.toBeCalled()
+    expect(socketUtil.listen).not.toBeCalled()
   }) 
 })

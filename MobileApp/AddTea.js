@@ -1,12 +1,34 @@
 import React, { Component } from 'react';
-import {View, StyleSheet, TextInput, Button, Alert } from 'react-native';
+import {View, StyleSheet, TextInput, Button, Text } from 'react-native';
+import {sendAndWaitWithTimeout} from './socketUtil.js';
 
 const styles = StyleSheet.create({
     mainContainer: {
       flex: 1,
       height: '100%',
       backgroundColor: 'lightyellow',
+      alignContent: 'center', 
+      justifyContent: 'center',
     },
+    title: {
+      marginLeft: 10,
+      marginBottom: 50,
+      fontSize: 30,
+      fontWeight: 'bold'
+    },
+    text: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      marginLeft: 10,
+    },
+    textInput: {
+      borderWidth: 1,
+      borderColor: 'lightgrey',
+      margin: 10,
+      marginTop: 2,
+      lineHeight: 20,
+      fontSize: 15,
+    }
 })
 
 export class AddTea extends Component {
@@ -16,7 +38,7 @@ export class AddTea extends Component {
       name: '',
       steepTime: '0',
       temp: '0',
-    };
+    }
   }
 
   validateInputs = (name, steepTime, temp) => {
@@ -42,34 +64,29 @@ export class AddTea extends Component {
     if(this.validateInputs(this.state.name, this.state.steepTime, this.state.temp)) {
       let newTea = {
         name: this.state.name,
-        steepTime: this.state.steepTime,
-        temp: this.state.temp
+        steepTime: parseInt(this.state.steepTime),
+        temp: parseInt(this.state.temp),
+        isCustom: 1,
       }
       let newTeaProfileArray = this.props.navigation.state.params.teas
-      newTeaProfileArray.push(newTea)
-      const {navigate} = this.props.navigation
-      navigate('Home', {teas: newTeaProfileArray})
-    } else {
-      // Alert.alert(
-      //   'Alert Title',
-      //   'My Alert Msg',
-      //   [
-      //     {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
-      //     {
-      //       text: 'Cancel',
-      //       onPress: () => console.log('Cancel Pressed'),
-      //       style: 'cancel',
-      //     },
-      //     {text: 'OK', onPress: () => console.log('OK Pressed')},
-      //   ],
-      //   {cancelable: false},
-      // );
+      let data = {
+        "msgId": 9,
+        "tea": newTea,
+      }
+      sendAndWaitWithTimeout(data, (msg) => {
+        newTea.teaId = msg.teaId
+        newTeaProfileArray.push(newTea)
+        const {navigate} = this.props.navigation
+        navigate('Home', {newTeaProfileArray})
+      }, 9)
     }
   }
 
   render() {
     return (
       <View style={styles.mainContainer}> 
+        <Text style={styles.title}>Add Tea</Text>
+        <Text style={styles.text}>Name:</Text>
         <TextInput
           style={styles.textInput}
           placeholder="Tea name"
@@ -78,6 +95,7 @@ export class AddTea extends Component {
           returnKeyType="next"
           maxLength={20}
         />
+        <Text style={styles.text}>Steep Time:</Text>
         <TextInput
           style={styles.textInput}
           placeholder="Steep time"
@@ -86,6 +104,7 @@ export class AddTea extends Component {
           returnKeyType="next"
           maxLength={20}
         />
+        <Text style={styles.text}>Temperature:</Text>
         <TextInput
           style={styles.textInput}
           placeholder="Temperature"
