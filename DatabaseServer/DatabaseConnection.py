@@ -60,7 +60,7 @@ class DatabaseConnection:
         self.addTeaProfile(teaPresetProfile3)
         teaPresetProfile4 = ('Black Tea', 300, 85.0, 0)
         self.addTeaProfile(teaPresetProfile4)
-        teaPresetProfile4 = ('Test Tea', 10, 27.2, 0)
+        teaPresetProfile5 = ('Test Tea', 10, 27.2, 0)
         self.addTeaProfile(teaPresetProfile5)
 
         # Adding alarm presets
