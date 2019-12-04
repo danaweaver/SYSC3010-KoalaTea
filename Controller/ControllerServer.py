@@ -89,30 +89,39 @@ class ControllerServer:
     return - True = successfuly complete, False = kettle error, None = cancel applied
     """
     def startTeaProcess(self, tea, alarm, addr):
+
+        #Turn on Kettle
         if not self.switchControl.turnOnKettle():
             print('Kettle not available')
             self.error(addr)
             return False
 
+        #Measure the water
         if not self.checkCancel(): self.arduinoControl.measureWater(tea['temp'])
         else: return 
 
+        #Turn off Kettle
         if not self.switchControl.turnOffKettle():
             self.error(addr)
             return False
         
+        #Lower the tea bag
         if not self.checkCancel(): self.arduinoControl.lowerTeaBag()
         else: return
         
+        #Start and display the timer
         if not self.checkCancel(): self.arduinoControl.displayTimer(tea["steepTime"])
         else: return
         
+        #Raise the tea bag
         if not self.checkCancel(): self.arduinoControl.raiseTeaBag()
         else: return
         
+        #Play the alarm
         if not self.checkCancel(): self.speakerControl.playAlarm(alarm['fileLocation'])
         else: return
         
+        #Notify the user that tea is complete
         if not self.checkCancel(): self.mobileControl.notifyUser(self.sMobile, addr)
         else: return
         
@@ -134,7 +143,7 @@ class ControllerServer:
     """
     def cancelThread(self):
         print("STARTING THREAD")
-        self.sCancel.bind(('192.168.43.248', 1075))
+        self.sCancel.bind((netifaces.ifaddresses('wlan0')[netifaces .AF_INET][0]['addr'], 1075))
 
         while True:
             print("\nWaiting to receive on port 1075")
