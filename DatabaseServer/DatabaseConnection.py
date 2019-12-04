@@ -52,14 +52,16 @@ class DatabaseConnection:
                                         fileLocation text NOT NULL
                                        ); """)
         # Adding tea profile presets
-        teaPresetProfile1 = ('Green Tea', 180, 150.0, 0)
+        teaPresetProfile1 = ('Green Tea', 180, 68.33, 0)
         self.addTeaProfile(teaPresetProfile1)
-        teaPresetProfile2 = ('Orange Pekoe', 240, 190.2, 0)
+        teaPresetProfile2 = ('White Tea', 300, 82.22, 0)
         self.addTeaProfile(teaPresetProfile2)
-        teaPresetProfile3 = ('Ginger', 60, 105.5, 0)
+        teaPresetProfile3 = ('Oolong Tea', 300, 87.8, 0)
         self.addTeaProfile(teaPresetProfile3)
-        teaPresetProfile4 = ('Earl Grey', 100, 120.0, 0)
+        teaPresetProfile4 = ('Black Tea', 300, 85.0, 0)
         self.addTeaProfile(teaPresetProfile4)
+        teaPresetProfile4 = ('Test Tea', 10, 27.2, 0)
+        self.addTeaProfile(teaPresetProfile5)
 
         # Adding alarm presets
         alarmPreset1 = ('Classic', "/home/pi/Desktop/Music/BasicAlarm.mp3")
