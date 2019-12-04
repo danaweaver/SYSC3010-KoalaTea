@@ -59,6 +59,8 @@ class DatabaseControl:
     jdata - json message to send to the Database
     expMsgId - the expected msgId received from the Database
     sock - the controller socket to send to the Database
+
+    return - If successful, the received message from the Database, else False when error
     """
     def sendReceive(self, jdata, expMsgId, sock):
         sock.settimeout(5) #Set socket timeout for socket to check from dropped packets from the Database
