@@ -42,6 +42,8 @@ Vivian Le 100998809
 `$ python Controller/ControllerServer.py`
 
 ### Setting up the Arduino:
+- Setup hardware according to wiring diagram below
 - Download and install arduino onto Raspberry Pi #2
 - Open up the arduino program
 - Run the ino file located in /koalaTeaArduino
+![Wiring Diagram](https://raw.githubusercontent.com/danaweaver/SYSC3010-KoalaTea/master/wiringDiagram.png)
