@@ -176,8 +176,6 @@ class ControllerServer:
         print('An error occured in the system. Resetting controls...')
         self.mobileControl.notifyUserError(self.sMobile, addr)
         self.arduinoControl.error()
-        self.reset()
-        #TODO: Remove this if working: self.speakerControl.stopAlarm()
         print('Controls have completely reseted.')
 
 
